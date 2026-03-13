@@ -1,4 +1,4 @@
-// combate.js
+// --- LÓGICA DE COMBATE ---
 
 function calcularDano(heroi) {
     let danoBase = heroi.forca * 2;
@@ -6,7 +6,7 @@ function calcularDano(heroi) {
     let dado = Math.random() * 100;
 
     if (dado < chanceCritico) {
-        return danoBase * 2;
+        return danoBase * 2; // Crítico!
     }
     return danoBase;
 }
@@ -16,6 +16,7 @@ function verificarLevelUp(heroi) {
     if (heroi.xp >= xpNecessario) {
         heroi.nivel++;
         heroi.xp = 0;
+        heroi.pontos_livres = (heroi.pontos_livres || 0) + 5; // Ganha pontos ao subir
         return true;
     }
     return false;
@@ -26,8 +27,38 @@ function sortearOuro(nivelMonstro) {
     return base * nivelMonstro;
 }
 
-// NOVA: Lógica de dano do monstro
 function calcularDanoMonstro(nivel) {
-    // Monstro causa entre 2 e 6 de dano baseados no nível
     return Math.floor(Math.random() * 5) + (nivel + 1);
+}
+
+// --- FUNÇÃO DE SALVAMENTO PÓS-VITÓRIA ---
+// Chame esta função assim que o monstro morrer!
+async function finalizarCombate(heroi, ouroGanho, xpGanho) {
+    // Atualiza localmente
+    heroi.ouro += ouroGanho;
+    heroi.xp += xpGanho;
+    
+    const subiuDeNivel = verificarLevelUp(heroi);
+
+    try {
+        const { error } = await supabaseClient
+            .from('personagens')
+            .update({ 
+                ouro: heroi.ouro, 
+                xp: heroi.xp,
+                nivel: heroi.nivel,
+                hp_atual: heroi.hp_atual,
+                pontos_livres: heroi.pontos_livres
+            })
+            .eq('id', heroi.id);
+
+        if (error) throw error;
+        
+        if (subiuDeNivel) alert("✨ LEVEL UP! Você alcançou o nível " + heroi.nivel);
+        console.log("💰 Ouro e XP salvos no Supabase!");
+        
+    } catch (e) {
+        console.error("Erro ao salvar progresso:", e);
+        alert("Erro ao salvar progresso no banco de dados!");
+    }
 }
