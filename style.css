@@ -80,3 +80,30 @@ textarea {
     margin-bottom: 10px;
     font-family: inherit;
 }
+
+
+                    //// texto central editado
+
+
+
+                    /* Adiciona um efeito de profundidade no fundo do site */
+body {
+    background: radial-gradient(circle, #1a1a1a 0%, #000000 100%);
+}
+
+/* Deixa o mural com uma altura máxima e barra de rolagem se tiver muitos recados */
+#mural-mensagens {
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 10px;
+    margin-top: 20px;
+}
+
+/* Personaliza a barra de rolagem (opcional, fica bem moderno) */
+#mural-mensagens::-webkit-scrollbar {
+    width: 6px;
+}
+#mural-mensagens::-webkit-scrollbar-thumb {
+    background: #00ff00;
+    border-radius: 10px;
+}
