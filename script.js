@@ -19,7 +19,7 @@ function fazerLogin() {
         // Se errar, mostra a mensagem vermelha
         document.getElementById('erro').innerText = "Usuário ou senha incorretos!";
     }
-}
+} // <--- Esta última chave fecha a função fazerLogin
 
 function logout() {
     location.reload();
