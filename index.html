@@ -19,10 +19,19 @@
         </div>
 
         <div id="feed-area" style="display: none;">
-            <h2 id="bemVindo"></h2>
-            <p>Este é o nosso espaço privado!</p>
-            <button onclick="logout()">Sair</button>
-        </div>
+    <h2 id="bemVindo"></h2>
+    
+    <div class="mural-input">
+        <textarea id="textoMensagem" placeholder="Escreva um recado para a família..."></textarea>
+        <button onclick="postarMensagem()">Postar Recado</button>
+    </div>
+
+    <div id="mural-mensagens">
+        <p>Carregando recados...</p>
+    </div>
+
+    <button onclick="logout()" class="btn-sair">Sair</button>
+</div>
     </div>
     <script src="script.js"></script>
 </body>
