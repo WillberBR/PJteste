@@ -4,32 +4,63 @@
     <meta charset="UTF-8">
     <title>Mundo Medieval - Aventura</title>
     <style>
-        body { background: #000; color: white; font-family: sans-serif; margin: 0; text-align: center; }
-        .header { background: #111; padding: 20px; border-bottom: 2px solid #00ff00; display: flex; justify-content: space-around; }
+        body { background: #000; color: white; font-family: 'Segoe UI', sans-serif; margin: 0; text-align: center; }
+        
+        /* Cabeçalho */
+        .header { 
+            background: #111; padding: 20px; border-bottom: 2px solid #00ff00; 
+            display: flex; justify-content: space-around; align-items: center;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.2);
+        }
+        .stat-label { font-size: 12px; color: #666; display: block; text-transform: uppercase; }
         .stat-val { color: #00ff00; font-weight: bold; font-size: 20px; }
+
+        /* Área do Monstro */
         .monster-area { margin-top: 50px; }
-        .monster-card { background: #1a1a1a; padding: 40px; border-radius: 20px; display: inline-block; cursor: pointer; border: 2px solid #333; }
-        .monster-card:active { transform: scale(0.95); }
-        #game-log { margin-top: 20px; color: #888; font-size: 14px; height: 100px; overflow-y: auto; }
+        .monster-card { 
+            background: #1a1a1a; padding: 40px; border-radius: 25px; 
+            display: inline-block; cursor: pointer; border: 2px solid #333;
+            transition: 0.1s; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .monster-card:active { transform: scale(0.95); border-color: #ff0000; }
+        .monster-hp-bar { color: #ff4444; font-size: 24px; font-weight: bold; margin: 15px 0; }
+        
+        /* Log de Mensagens */
+        #game-log { 
+            margin: 30px auto; width: 80%; max-width: 500px;
+            background: #050505; border: 1px solid #222;
+            padding: 15px; font-size: 14px; color: #888;
+            height: 120px; overflow-y: auto; border-radius: 10px;
+            line-height: 1.6; text-align: left;
+        }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <div>HERÓI: <span id="display-nome" class="stat-val">...</span></div>
-        <div>NÍVEL: <span id="display-lvl" class="stat-val">1</span></div>
-        <div>XP: <span id="display-xp" class="stat-val">0</span></div>
+        <div>
+            <span class="stat-label">Herói</span>
+            <span id="display-nome" class="stat-val">...</span>
+        </div>
+        <div>
+            <span class="stat-label">Nível</span>
+            <span id="display-lvl" class="stat-val">1</span>
+        </div>
+        <div>
+            <span class="stat-label">Experiência</span>
+            <span id="display-xp" class="stat-val">0</span>
+        </div>
     </div>
 
     <div class="monster-area">
         <div class="monster-card" onclick="atacar()">
-            <h2>👾 SLIME</h2>
-            <div style="color: #ff4444; font-size: 24px;">HP: <span id="monster-hp">10</span></div>
-            <p>CLIQUE PARA ATACAR</p>
+            <h2 id="monster-name">👾 SLIME DE ESGOTO</h2>
+            <div class="monster-hp-bar">HP: <span id="monster-hp">10</span></div>
+            <small style="color: #444;">CLIQUE PARA ATACAR</small>
         </div>
     </div>
 
-    <div id="game-log">>> Carregando herói...</div>
+    <div id="game-log">>> Iniciando conexão com o reino...</div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="combate.js"></script>
@@ -41,8 +72,11 @@
         let heroi = null;
         let monsterHP = 10;
 
+        // FUNÇÃO INICIAR CORRIGIDA (EVITA ERRO DE DUPLICIDADE)
         async function iniciar() {
             const email = localStorage.getItem("usuario_logado_email");
+            const log = document.getElementById('game-log');
+
             if (!email) {
                 alert("Sessão expirada. Faça login novamente.");
                 window.location.href = "index.html";
@@ -50,60 +84,81 @@
             }
 
             try {
+                log.innerText = ">> Buscando herói no banco de dados...";
+                
+                // Correção: Usando .limit(1) para evitar o erro de 'múltiplas linhas'
                 const { data, error } = await supabaseClient
                     .from('personagens')
                     .select('*')
                     .eq('id_conta', email)
-                    .single();
+                    .order('id', { ascending: false }) // Pega o mais recente
+                    .limit(1);
 
                 if (error) throw error;
 
-                if (data) {
-                    heroi = data;
+                if (data && data.length > 0) {
+                    heroi = data[0];
+                    
+                    // Atualiza a tela com os dados reais
                     document.getElementById('display-nome').innerText = heroi.nome_heroi;
                     document.getElementById('display-lvl').innerText = heroi.nivel;
                     document.getElementById('display-xp').innerText = heroi.xp;
-                    document.getElementById('game-log').innerText = ">> Herói pronto para o combate!";
+                    
+                    log.innerText = ">> Herói carregado com sucesso! Boa sorte, " + heroi.nome_heroi;
+                } else {
+                    log.innerText = ">> Nenhum herói encontrado para este e-mail.";
+                    setTimeout(() => { window.location.href = "personagem.html"; }, 2000);
                 }
             } catch (err) {
-                console.error(err);
-                document.getElementById('game-log').innerText = ">> Erro ao carregar herói. Verifique o banco de dados.";
+                console.error("Erro ao carregar:", err);
+                log.innerHTML = `<span style="color:red">>> Erro técnico: ${err.message}</span>`;
             }
         }
 
         function atacar() {
             if (!heroi) return;
 
-            // Chama a função do combate.js
+            // Função calcularDano deve estar no seu combate.js
             const dano = calcularDano(heroi);
             monsterHP -= dano;
             
-            const log = document.getElementById('game-log');
-            log.innerHTML = `> Você deu ${dano} de dano!<br>` + log.innerHTML;
+            escreverLog(`Você causou ${dano} de dano!`);
 
             if (monsterHP <= 0) {
                 heroi.xp += 5;
-                log.innerHTML = `<b style="color:yellow">> Inimigo derrotado! +5 XP</b><br>` + log.innerHTML;
-                
+                escreverLog(`⚔️ Inimigo derrotado! +5 XP`);
+
+                // Função verificarLevelUp deve estar no seu combate.js
                 if (verificarLevelUp(heroi)) {
-                    log.innerHTML = `<b style="color:#00ff00">> LEVEL UP! Nível ${heroi.nivel}</b><br>` + log.innerHTML;
+                    escreverLog(`🌟 LEVEL UP! Você agora é nível ${heroi.nivel}!`);
                     document.getElementById('display-lvl').innerText = heroi.nivel;
                 }
 
+                // Reseta o monstro mais forte
                 monsterHP = 10 + (heroi.nivel * 5);
                 document.getElementById('display-xp').innerText = heroi.xp;
-                salvarNoBanco();
+                salvarProgresso();
             }
             document.getElementById('monster-hp').innerText = monsterHP;
         }
 
-        async function salvarNoBanco() {
+        async function salvarProgresso() {
             await supabaseClient
                 .from('personagens')
-                .update({ xp: heroi.xp, nivel: heroi.nivel, pontos_livres: heroi.pontos_livres })
+                .update({ 
+                    xp: heroi.xp, 
+                    nivel: heroi.nivel, 
+                    pontos_livres: heroi.pontos_livres 
+                })
                 .eq('id', heroi.id);
         }
 
+        function escreverLog(msg) {
+            const logBox = document.getElementById('game-log');
+            logBox.innerHTML = `> ${msg}<br>` + logBox.innerHTML;
+        }
+
+        // Inicia o processo
         iniciar();
     </script>
 </body>
