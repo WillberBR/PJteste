@@ -13,7 +13,6 @@
         .bar-container { width: 100%; height: 18px; background: #333; border-radius: 10px; position: relative; overflow: hidden; border: 1px solid #444; }
         .bar-fill { height: 100%; width: 0%; transition: width 0.4s ease-in-out; }
         
-        /* Cores Ativas */
         .hp-bar { background: linear-gradient(90deg, #ff4444, #880000); box-shadow: 0 0 10px rgba(255, 68, 68, 0.5); }
         .mp-bar { background: linear-gradient(90deg, #4444ff, #000088); box-shadow: 0 0 10px rgba(68, 68, 255, 0.5); }
         .xp-bar { background: linear-gradient(90deg, #ffcc00, #aa8800); }
@@ -33,10 +32,14 @@
 
         .monster-card { background: #1a1a1a; padding: 40px; border-radius: 25px; display: inline-block; cursor: pointer; border: 2px solid #333; margin-top: 40px; }
         #game-log { margin: 20px auto; width: 90%; max-width: 600px; background: #050505; border: 1px solid #222; padding: 15px; font-size: 14px; height: 120px; overflow-y: auto; border-radius: 10px; text-align: left; }
+        
         .btn-cidade { position: fixed; bottom: 20px; right: 20px; background: #ffcc00; border: none; padding: 15px 20px; border-radius: 12px; font-weight: bold; cursor: pointer; }
+        #btn-treinar { background: #ffcc00; border: none; padding: 5px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 10px; display: none; color: black; }
 
         #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 999; }
         #level-up-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #151515; border: 2px solid #00ff00; padding: 30px; border-radius: 20px; z-index: 1000; width: 280px; }
+        .stat-upgrade { display: flex; justify-content: space-between; margin: 10px 0; align-items: center; }
+        .btn-up { background: #00ff00; border: none; padding: 5px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -61,6 +64,8 @@
         <span style="color: #ffcc00;">💰 OURO: <b id="display-ouro">0</b></span>
     </div>
 
+    <button id="btn-treinar" onclick="abrirModal()">✨ DISTRIBUIR PONTOS (<span id="btn-pontos-qtd">0</span>)</button>
+
     <div class="monster-area">
         <div id="card-monstro" class="monster-card" onclick="atacar()">
             <h2 id="monster-name">👾 SLIME DE ESGOTO</h2>
@@ -75,8 +80,12 @@
     <div id="modal-overlay"></div>
     <div id="level-up-modal">
         <h2 style="color: #00ff00;">🌟 LEVEL UP!</h2>
-        <p>Pontos: <span id="modal-pontos">0</span></p>
-        <button onclick="fecharModal()" style="width:100%; padding:10px;">Continuar</button>
+        <p>Pontos Disponíveis: <span id="modal-pontos" style="color: #ffcc00; font-weight: bold;">0</span></p>
+        <div class="stat-upgrade"><span>Força</span> <button class="btn-up" onclick="distribuir('forca')">+</button></div>
+        <div class="stat-upgrade"><span>Agilidade</span> <button class="btn-up" onclick="distribuir('agilidade')">+</button></div>
+        <div class="stat-upgrade"><span>Vitalidade</span> <button class="btn-up" onclick="distribuir('vitalidade')">+</button></div>
+        <div class="stat-upgrade"><span>Inteligência</span> <button class="btn-up" onclick="distribuir('inteligencia')">+</button></div>
+        <button onclick="fecharModal()" style="margin-top:20px; width:100%; padding:10px; cursor:pointer; background:#333; color:white; border:none; border-radius:5px;">Fechar</button>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -95,9 +104,9 @@
             const { data } = await supabaseClient.from('personagens').select('*').eq('id', heroiId).single();
             if (data) {
                 heroi = data;
-                // Garantir que HP atual não seja nulo
                 if(!heroi.hp_atual) heroi.hp_atual = 20 + (heroi.vitalidade * 10);
                 atualizarInterface();
+                if (heroi.pontos_livres > 0) abrirModal();
             }
         }
 
@@ -106,57 +115,57 @@
             const maxMP = 10 + (heroi.inteligencia * 5);
             const xpProxNivel = heroi.nivel * 20;
 
+            // Atributos
             document.getElementById('display-nome').innerText = heroi.nome_heroi;
             document.getElementById('display-lvl').innerText = heroi.nivel;
             document.getElementById('display-ouro').innerText = heroi.ouro || 0;
             document.getElementById('display-for').innerText = heroi.forca;
+            document.getElementById('display-agi').innerText = heroi.agilidade || 0;
+            document.getElementById('display-int').innerText = heroi.inteligencia || 0;
             document.getElementById('display-vit').innerText = heroi.vitalidade;
 
-            // Atualiza Textos das Barras
+            // Barras
             document.getElementById('hp-txt').innerText = `${heroi.hp_atual}/${maxHP}`;
             document.getElementById('mp-txt').innerText = `${heroi.mana || 0}/${maxMP}`;
             document.getElementById('xp-txt').innerText = `${heroi.xp}/${xpProxNivel}`;
 
-            // Atualiza Preenchimento (Cores)
             document.getElementById('hp-fill').style.width = `${(heroi.hp_atual / maxHP) * 100}%`;
             document.getElementById('mp-fill').style.width = `${((heroi.mana || 0) / maxMP) * 100}%`;
             document.getElementById('xp-fill').style.width = `${(heroi.xp / xpProxNivel) * 100}%`;
+
+            // Botão de Treinar
+            const btnTreinar = document.getElementById('btn-treinar');
+            if (heroi.pontos_livres > 0) {
+                btnTreinar.style.display = 'inline-block';
+                document.getElementById('btn-pontos-qtd').innerText = heroi.pontos_livres;
+            } else {
+                btnTreinar.style.display = 'none';
+            }
         }
 
         function atacar() {
             if (!heroi || travado) return;
-            
             const danoHeroi = calcularDano(heroi);
             monsterHP -= danoHeroi;
-            
             const card = document.getElementById('card-monstro');
             card.classList.add('shake-anim');
             setTimeout(() => card.classList.remove('shake-anim'), 200);
-
             escreverLog(`⚔️ Você causou ${danoHeroi} de dano!`);
-
-            if (monsterHP <= 0) {
-                vitoria();
-            } else {
-                travado = true;
-                setTimeout(monstroAtaca, 600);
-            }
+            if (monsterHP <= 0) vitoria();
+            else { travado = true; setTimeout(monstroAtaca, 600); }
             document.getElementById('monster-hp').innerText = Math.max(0, monsterHP);
         }
 
         function monstroAtaca() {
             const danoM = calcularDanoMonstro(heroi.nivel);
             heroi.hp_atual -= danoM;
-            
             escreverLog(`<span style="color:#ff4444;">💥 Slime revidou: -${danoM} HP!</span>`);
-            
             if (heroi.hp_atual <= 0) {
                 heroi.hp_atual = 0;
-                escreverLog("☠️ Você desmaiou! Fugindo para a cidade...");
+                escreverLog("☠️ Você desmaiou! Fugindo...");
                 salvarProgresso();
                 setTimeout(() => window.location.href = "cidade.html", 2000);
             }
-            
             travado = false;
             atualizarInterface();
             salvarProgresso();
@@ -167,9 +176,10 @@
             heroi.xp += 5;
             heroi.ouro = (heroi.ouro || 0) + ouro;
             escreverLog(`🏆 Vitória! +5 XP e 💰${ouro} Ouro.`);
-            
-            if (verificarLevelUp(heroi)) abrirModal();
-            
+            if (verificarLevelUp(heroi)) {
+                heroi.pontos_livres = (heroi.pontos_livres || 0) + 5;
+                abrirModal();
+            }
             monsterHP = 10 + (heroi.nivel * 5);
             document.getElementById('monster-hp').innerText = monsterHP;
             salvarProgresso();
@@ -178,8 +188,31 @@
 
         async function salvarProgresso() {
             await supabaseClient.from('personagens').update({ 
-                xp: heroi.xp, nivel: heroi.nivel, ouro: heroi.ouro, hp_atual: heroi.hp_atual 
+                xp: heroi.xp, nivel: heroi.nivel, ouro: heroi.ouro, hp_atual: heroi.hp_atual,
+                forca: heroi.forca, agilidade: heroi.agilidade, vitalidade: heroi.vitalidade, 
+                inteligencia: heroi.inteligencia, pontos_livres: heroi.pontos_livres 
             }).eq('id', heroi.id);
+        }
+
+        function abrirModal() { 
+            document.getElementById('modal-overlay').style.display = 'block'; 
+            document.getElementById('level-up-modal').style.display = 'block'; 
+            document.getElementById('modal-pontos').innerText = heroi.pontos_livres;
+        }
+        function fecharModal() { 
+            document.getElementById('modal-overlay').style.display = 'none'; 
+            document.getElementById('level-up-modal').style.display = 'none'; 
+            atualizarInterface(); 
+        }
+
+        async function distribuir(stat) {
+            if (heroi.pontos_livres > 0) {
+                heroi[stat]++;
+                heroi.pontos_livres--;
+                document.getElementById('modal-pontos').innerText = heroi.pontos_livres;
+                await salvarProgresso();
+                atualizarInterface();
+            }
         }
 
         function escreverLog(msg) {
@@ -188,9 +221,6 @@
         }
 
         function irParaCidade() { window.location.href = "cidade.html"; }
-        function abrirModal() { document.getElementById('modal-overlay').style.display = 'block'; document.getElementById('level-up-modal').style.display = 'block'; }
-        function fecharModal() { location.reload(); }
-
         iniciar();
     </script>
 </body>
