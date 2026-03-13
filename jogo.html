@@ -9,37 +9,34 @@
         .info-personagem { text-align: left; padding-left: 10px; }
         .nome-heroi { font-size: 20px; color: #00ff00; font-weight: bold; display: block; }
         
-        /* Barras de Status */
         .stats-bars { display: flex; flex-direction: column; gap: 8px; }
         .bar-container { width: 100%; height: 18px; background: #333; border-radius: 10px; position: relative; overflow: hidden; border: 1px solid #444; }
-        .bar-fill { height: 100%; width: 0%; transition: width 0.3s ease-in-out; }
-        .hp-bar { background: linear-gradient(90deg, #ff4444, #880000); }
-        .mp-bar { background: linear-gradient(90deg, #4444ff, #000088); }
+        .bar-fill { height: 100%; width: 0%; transition: width 0.4s ease-in-out; }
+        
+        /* Cores Ativas */
+        .hp-bar { background: linear-gradient(90deg, #ff4444, #880000); box-shadow: 0 0 10px rgba(255, 68, 68, 0.5); }
+        .mp-bar { background: linear-gradient(90deg, #4444ff, #000088); box-shadow: 0 0 10px rgba(68, 68, 255, 0.5); }
         .xp-bar { background: linear-gradient(90deg, #ffcc00, #aa8800); }
-        .bar-text { position: absolute; width: 100%; text-align: center; font-size: 11px; font-weight: bold; color: white; line-height: 18px; text-shadow: 1px 1px 2px black; }
+        
+        .bar-text { position: absolute; width: 100%; text-align: center; font-size: 11px; font-weight: bold; color: white; line-height: 18px; text-shadow: 1px 1px 2px black; z-index: 2; }
 
         .mini-stats { display: flex; justify-content: space-around; background: #0a0a0a; padding: 5px; font-size: 12px; color: #888; border-bottom: 1px solid #222; }
 
         @keyframes shake {
-            0% { transform: translate(1px, 1px) rotate(0deg); }
-            20% { transform: translate(-3px, 0px) rotate(1deg); }
-            40% { transform: translate(1px, -1px) rotate(1deg); }
-            60% { transform: translate(-3px, 1px) rotate(0deg); }
-            80% { transform: translate(-1px, -1px) rotate(1deg); }
-            100% { transform: translate(1px, -2px) rotate(-1deg); }
+            0% { transform: translate(1px, 1px); }
+            20% { transform: translate(-3px, 0px); }
+            40% { transform: translate(1px, -1px); }
+            60% { transform: translate(-3px, 1px); }
+            100% { transform: translate(1px, -2px); }
         }
         .shake-anim { animation: shake 0.2s; }
 
         .monster-card { background: #1a1a1a; padding: 40px; border-radius: 25px; display: inline-block; cursor: pointer; border: 2px solid #333; margin-top: 40px; }
         #game-log { margin: 20px auto; width: 90%; max-width: 600px; background: #050505; border: 1px solid #222; padding: 15px; font-size: 14px; height: 120px; overflow-y: auto; border-radius: 10px; text-align: left; }
+        .btn-cidade { position: fixed; bottom: 20px; right: 20px; background: #ffcc00; border: none; padding: 15px 20px; border-radius: 12px; font-weight: bold; cursor: pointer; }
 
-        .btn-cidade { position: fixed; bottom: 20px; right: 20px; background: #ffcc00; color: black; border: none; padding: 15px 20px; border-radius: 12px; font-weight: bold; cursor: pointer; }
-        
-        /* Modal Level Up */
         #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 999; }
         #level-up-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #151515; border: 2px solid #00ff00; padding: 30px; border-radius: 20px; z-index: 1000; width: 280px; }
-        .stat-upgrade { display: flex; justify-content: space-between; margin: 10px 0; }
-        .btn-up { background: #00ff00; border: none; padding: 5px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -73,18 +70,13 @@
     </div>
 
     <div id="game-log">>> Iniciando caçada...</div>
-
     <button class="btn-cidade" onclick="irParaCidade()">🏃 IR PARA A CIDADE</button>
 
     <div id="modal-overlay"></div>
     <div id="level-up-modal">
         <h2 style="color: #00ff00;">🌟 LEVEL UP!</h2>
-        <p>Pontos: <span id="modal-pontos" style="color: #ffcc00;">0</span></p>
-        <div class="stat-upgrade"><span>Força</span> <button class="btn-up" onclick="distribuir('forca')">+</button></div>
-        <div class="stat-upgrade"><span>Agilidade</span> <button class="btn-up" onclick="distribuir('agilidade')">+</button></div>
-        <div class="stat-upgrade"><span>Vitalidade</span> <button class="btn-up" onclick="distribuir('vitalidade')">+</button></div>
-        <div class="stat-upgrade"><span>Inteligência</span> <button class="btn-up" onclick="distribuir('inteligencia')">+</button></div>
-        <button onclick="fecharModal()" style="margin-top:20px; width:100%; padding:10px; cursor:pointer;">Continuar</button>
+        <p>Pontos: <span id="modal-pontos">0</span></p>
+        <button onclick="fecharModal()" style="width:100%; padding:10px;">Continuar</button>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -96,14 +88,16 @@
 
         let heroi = null;
         let monsterHP = 10;
+        let travado = false;
 
         async function iniciar() {
             const heroiId = localStorage.getItem("heroi_selecionado_id");
             const { data } = await supabaseClient.from('personagens').select('*').eq('id', heroiId).single();
             if (data) {
                 heroi = data;
+                // Garantir que HP atual não seja nulo
+                if(!heroi.hp_atual) heroi.hp_atual = 20 + (heroi.vitalidade * 10);
                 atualizarInterface();
-                if (heroi.pontos_livres > 0) abrirModal();
             }
         }
 
@@ -114,81 +108,88 @@
 
             document.getElementById('display-nome').innerText = heroi.nome_heroi;
             document.getElementById('display-lvl').innerText = heroi.nivel;
-            document.getElementById('display-for').innerText = heroi.forca;
-            document.getElementById('display-agi').innerText = heroi.agilidade || 0;
-            document.getElementById('display-int').innerText = heroi.inteligencia || 0;
-            document.getElementById('display-vit').innerText = heroi.vitalidade;
             document.getElementById('display-ouro').innerText = heroi.ouro || 0;
+            document.getElementById('display-for').innerText = heroi.forca;
+            document.getElementById('display-vit').innerText = heroi.vitalidade;
 
-            document.getElementById('hp-txt').innerText = `${maxHP}/${maxHP}`;
-            document.getElementById('mp-txt').innerText = `${maxMP}/${maxMP}`;
+            // Atualiza Textos das Barras
+            document.getElementById('hp-txt').innerText = `${heroi.hp_atual}/${maxHP}`;
+            document.getElementById('mp-txt').innerText = `${heroi.mana || 0}/${maxMP}`;
             document.getElementById('xp-txt').innerText = `${heroi.xp}/${xpProxNivel}`;
+
+            // Atualiza Preenchimento (Cores)
+            document.getElementById('hp-fill').style.width = `${(heroi.hp_atual / maxHP) * 100}%`;
+            document.getElementById('mp-fill').style.width = `${((heroi.mana || 0) / maxMP) * 100}%`;
             document.getElementById('xp-fill').style.width = `${(heroi.xp / xpProxNivel) * 100}%`;
         }
 
         function atacar() {
-            if (!heroi) return;
+            if (!heroi || travado) return;
+            
+            const danoHeroi = calcularDano(heroi);
+            monsterHP -= danoHeroi;
+            
             const card = document.getElementById('card-monstro');
-            card.classList.remove('shake-anim');
-            void card.offsetWidth; 
             card.classList.add('shake-anim');
+            setTimeout(() => card.classList.remove('shake-anim'), 200);
 
-            const dano = calcularDano(heroi);
-            monsterHP -= dano;
-            escreverLog(dano > heroi.forca * 2 ? `🔥 CRÍTICO! ${dano} de dano!` : `Causou ${dano} de dano.`);
+            escreverLog(`⚔️ Você causou ${danoHeroi} de dano!`);
 
-            if (monsterHP <= 0) vitoria();
+            if (monsterHP <= 0) {
+                vitoria();
+            } else {
+                travado = true;
+                setTimeout(monstroAtaca, 600);
+            }
             document.getElementById('monster-hp').innerText = Math.max(0, monsterHP);
         }
 
-        function vitoria() {
-            const ouroGanho = sortearOuro(heroi.nivel);
-            heroi.xp += 5;
-            heroi.ouro = (heroi.ouro || 0) + ouroGanho;
+        function monstroAtaca() {
+            const danoM = calcularDanoMonstro(heroi.nivel);
+            heroi.hp_atual -= danoM;
             
-            escreverLog(`⚔️ Vitória! +5 XP e 💰 ${ouroGanho} ouro.`);
-
-            if (verificarLevelUp(heroi)) {
-                heroi.pontos_livres = (heroi.pontos_livres || 0) + 5;
-                abrirModal();
+            escreverLog(`<span style="color:#ff4444;">💥 Slime revidou: -${danoM} HP!</span>`);
+            
+            if (heroi.hp_atual <= 0) {
+                heroi.hp_atual = 0;
+                escreverLog("☠️ Você desmaiou! Fugindo para a cidade...");
+                salvarProgresso();
+                setTimeout(() => window.location.href = "cidade.html", 2000);
             }
+            
+            travado = false;
+            atualizarInterface();
+            salvarProgresso();
+        }
+
+        function vitoria() {
+            const ouro = sortearOuro(heroi.nivel);
+            heroi.xp += 5;
+            heroi.ouro = (heroi.ouro || 0) + ouro;
+            escreverLog(`🏆 Vitória! +5 XP e 💰${ouro} Ouro.`);
+            
+            if (verificarLevelUp(heroi)) abrirModal();
+            
             monsterHP = 10 + (heroi.nivel * 5);
+            document.getElementById('monster-hp').innerText = monsterHP;
             salvarProgresso();
             atualizarInterface();
         }
 
         async function salvarProgresso() {
             await supabaseClient.from('personagens').update({ 
-                xp: heroi.xp, nivel: heroi.nivel, pontos_livres: heroi.pontos_livres, ouro: heroi.ouro 
+                xp: heroi.xp, nivel: heroi.nivel, ouro: heroi.ouro, hp_atual: heroi.hp_atual 
             }).eq('id', heroi.id);
-        }
-
-        function irParaCidade() { window.location.href = "cidade.html"; }
-        function abrirModal() { 
-            document.getElementById('modal-overlay').style.display = 'block'; 
-            document.getElementById('level-up-modal').style.display = 'block'; 
-            document.getElementById('modal-pontos').innerText = heroi.pontos_livres;
-        }
-        function fecharModal() { 
-            document.getElementById('modal-overlay').style.display = 'none'; 
-            document.getElementById('level-up-modal').style.display = 'none'; 
-            atualizarInterface(); 
-        }
-
-        async function distribuir(stat) {
-            if (heroi.pontos_livres > 0) {
-                heroi[stat]++;
-                heroi.pontos_livres--;
-                document.getElementById('modal-pontos').innerText = heroi.pontos_livres;
-                await supabaseClient.from('personagens').update({ [stat]: heroi[stat], pontos_livres: heroi.pontos_livres }).eq('id', heroi.id);
-                atualizarInterface();
-            }
         }
 
         function escreverLog(msg) {
             const log = document.getElementById('game-log');
             log.innerHTML = `> ${msg}<br>` + log.innerHTML;
         }
+
+        function irParaCidade() { window.location.href = "cidade.html"; }
+        function abrirModal() { document.getElementById('modal-overlay').style.display = 'block'; document.getElementById('level-up-modal').style.display = 'block'; }
+        function fecharModal() { location.reload(); }
 
         iniciar();
     </script>
