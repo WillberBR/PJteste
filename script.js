@@ -1,116 +1,124 @@
-// 1. CONFIGURAÇÃO (CLIENTE OFICIAL PARA TEMPO REAL)
+// CONFIGURAÇÕES DO SUPABASE
 const SUPABASE_URL = 'https://zkeshycglokyycuplczn.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_iDavmG9sQzqW6jPrOCjsmQ_5ISCiZUF';
-
-// Inicializa o cliente oficial do Supabase
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let nomeUsuarioLogado = "";
-let isAdmin = false;
 
-// 2. FUNÇÃO DE LOGIN
+// FUNÇÃO DE LOGIN
 async function fazerLogin() {
-    const emailInput = document.getElementById('userName');
-    const senhaInput = document.getElementById('userPass');
-    const msgErro = document.getElementById('erro');
-
-    if (!emailInput || !senhaInput) return;
-
-    const emailDigitado = emailInput.value.trim().toLowerCase();
-    const senhaDigitada = senhaInput.value.trim();
+    const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+    const senha = document.getElementById('loginSenha').value.trim();
 
     try {
-        const { data: dados, error } = await supabaseClient
+        const { data: usuarios, error } = await supabaseClient
             .from('usuarios_familia')
             .select('*')
-            .eq('email', emailDigitado)
-            .eq('senha', senhaDigitada);
+            .eq('email', email)
+            .eq('senha', senha);
 
-        if (dados && dados.length > 0) {
-            const usuario = dados[0];
-            nomeUsuarioLogado = usuario.nome_exibicao || "Usuário";
-            isAdmin = (usuario.role === "admin"); 
+        if (error) throw error;
 
+        if (usuarios.length > 0) {
+            const usuario = usuarios[0];
+            nomeUsuarioLogado = usuario.nome_exibicao;
+
+            // 1. GERA O AVATAR COM INICIAL NEON
+            gerarAvatarNeon(nomeUsuarioLogado);
+
+            // 2. ATUALIZA INTERFACE
             document.getElementById('perfil-nome').innerText = nomeUsuarioLogado;
             document.getElementById('login-area').style.display = 'none';
             document.getElementById('feed-area').style.display = 'block';
-            
-            // Avatar Neon
-            const fotoElemento = document.getElementById('perfil-foto');
-            if (fotoElemento) {
-                const inicial = nomeUsuarioLogado.charAt(0).toUpperCase();
-                fotoElemento.parentElement.innerHTML = `<div id="perfil-foto" style="width:80px; height:80px; border-radius:50%; background:#222; color:#00ff00; display:flex; align-items:center; justify-content:center; font-size:35px; font-weight:bold; border:2px solid #00ff00; margin: 0 auto; margin-bottom: 10px; text-shadow: 0 0 10px #00ff00;">${inicial}</div>`;
-            }
 
             carregarMensagens();
-            configurarTempoReal(); // ATIVA O "OUVIDO" DO SITE
         } else {
-            if (msgErro) msgErro.innerText = "Usuário ou senha incorretos!";
+            alert("E-mail ou senha incorretos!");
         }
-    } catch (e) { console.error(e); }
+    } catch (e) {
+        console.error(e);
+        alert("Erro ao entrar. Verifique sua conexão.");
+    }
 }
 
-// 3. FUNÇÃO DO TEMPO REAL (SEM F5)
-function configurarTempoReal() {
-    supabaseClient
-        .channel('mural_familia_realtime')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'Mural_Familia' }, (payload) => {
-            console.log('Mudança detectada!', payload);
-            carregarMensagens(); // Recarrega o mural sozinho para todos
-        })
-        .subscribe();
+// FUNÇÃO PARA GERAR O AVATAR NEON
+function gerarAvatarNeon(nome) {
+    const container = document.getElementById('perfil-foto-container');
+    if (!container) return;
+    
+    const inicial = nome.charAt(0).toUpperCase();
+    const ehWillber = (nome.toLowerCase() === "willber");
+    const corBrilho = ehWillber ? "#ff0000" : "#00ff00"; // Vermelho para você, Verde para os outros
+
+    container.innerHTML = `
+        <div style="width: 80px; height: 80px; border-radius: 50%; background: #111; color: ${corBrilho}; 
+        display: flex; align-items: center; justify-content: center; font-size: 40px; font-weight: bold; 
+        border: 2px solid ${corBrilho}; box-shadow: 0 0 15px ${corBrilho}; text-shadow: 0 0 10px ${corBrilho}; margin: 0 auto 15px auto;">
+            ${inicial}
+        </div>
+    `;
 }
 
-// 4. CARREGAR MENSAGENS
+// FUNÇÃO PARA CARREGAR MURAL
 async function carregarMensagens() {
-    const mural = document.getElementById('mural-mensagens');
-    if (!mural) return;
+    const mural = document.getElementById('mural-recados');
+    mural.innerHTML = "Carregando recados...";
 
-    const { data: mensagens } = await supabaseClient
-        .from('Mural_Familia')
-        .select('*')
-        .order('fixado', { ascending: false })
-        .order('created_at', { ascending: false });
+    try {
+        const { data: mensagens, error } = await supabaseClient
+            .from('mensagens_familia')
+            .select('*')
+            .order('created_at', { ascending: false });
 
-    mural.innerHTML = ""; 
-    mensagens.forEach(msg => {
-        const podeExcluir = (msg.autor === nomeUsuarioLogado || isAdmin);
-        const botaoExcluir = podeExcluir ? `<button onclick="excluirPost(${msg.id})" style="background:none; border:none; color:#ff4444; cursor:pointer; float:right;">🗑️</button>` : "";
-        const botaoFixar = isAdmin ? `<button onclick="toggleFixar(${msg.id}, ${msg.fixado})" style="background:none; border:none; color:${msg.fixado ? '#FFD700' : '#666'}; cursor:pointer; float:right; margin-right:10px;">📌</button>` : "";
-        const ehAdmin = (msg.autor === "Willber" || (msg.autor === nomeUsuarioLogado && isAdmin));
-        
-        mural.innerHTML += `
-            <div class="post" style="background:${msg.fixado ? '#1a2a1a' : '#1a1a1a'}; padding:15px; border-radius:10px; margin-bottom:15px; border:1px solid ${msg.fixado ? '#00ff00' : '#333'};">
-                ${botaoExcluir} ${botaoFixar}
-                <strong style="color:#00ff00; ${ehAdmin ? 'text-shadow: 0 0 8px #00ff00;' : ''}">${msg.autor}</strong>
-                ${ehAdmin ? '<span style="color:#FFD700; font-size:10px; margin-left:5px;">★ VERIFICADO</span>' : ''}
-                <p style="color:#eee; margin:10px 0;">${msg.conteudo}</p>
-                <button onclick="curtirPost(${msg.id}, ${msg.curtidas || 0})" style="background:#333; border:none; border-radius:20px; color:white; padding:5px 12px; cursor:pointer;">❤️ ${msg.curtidas || 0}</button>
-            </div>`;
-    });
+        if (error) throw error;
+
+        mural.innerHTML = "";
+        mensagens.forEach(msg => {
+            const ehWillber = (msg.autor.toLowerCase() === "willber");
+            
+            // Cores: Vermelho para Admin, Azul para Usuários
+            const corNome = ehWillber ? "#ff0000" : "#00d9ff";
+            const brilhoSombra = ehWillber ? "0 0 15px #ff0000" : "0 0 10px #00d9ff";
+            
+            // Ícones exclusivos do Admin
+            const iconesAdmin = ehWillber ? `
+                <span style="color:#FFD700; text-shadow: 0 0 10px #FFD700; font-size:16px; margin-left:8px;">👑</span>
+                <span style="color:#FFD700; font-size:10px; margin-left:4px; font-weight: bold;">★ VERIFICADO</span>
+            ` : '';
+
+            mural.innerHTML += `
+                <div style="border: 1px solid ${ehWillber ? '#ff0000' : '#333'}; background: #111; padding: 15px; border-radius: 12px; margin-bottom: 15px; position: relative; box-shadow: ${ehWillber ? '0 0 10px rgba(255,0,0,0.1)' : 'none'};">
+                    <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                        <strong style="color: ${corNome}; text-shadow: ${brilhoSombra}; font-size: 1.1em; text-transform: uppercase; letter-spacing: 1px;">
+                            ${msg.autor}
+                        </strong>
+                        ${iconesAdmin}
+                    </div>
+                    <p style="color: #eee; line-height: 1.5; margin: 0;">${msg.conteudo}</p>
+                    <small style="color: #555; font-size: 0.8em; display: block; margin-top: 10px;">Enviado agora</small>
+                </div>
+            `;
+        });
+    } catch (e) {
+        mural.innerHTML = "Erro ao carregar mural.";
+    }
 }
 
-// --- FUNÇÕES DE INTERAÇÃO ---
-async function toggleFixar(id, estado) {
-    await supabaseClient.from('Mural_Familia').update({ fixado: !estado }).eq('id', id);
+// FUNÇÃO PARA POSTAR
+async function postarRecado() {
+    const texto = document.getElementById('novoRecado').value.trim();
+    if (!texto) return;
+
+    const { error } = await supabaseClient
+        .from('mensagens_familia')
+        .insert([{ autor: nomeUsuarioLogado, conteudo: texto }]);
+
+    if (!error) {
+        document.getElementById('novoRecado').value = "";
+        carregarMensagens();
+    }
 }
 
-async function postarMensagem() {
-    const campo = document.getElementById('textoMensagem');
-    if (!campo.value.trim()) return;
-    await supabaseClient.from('Mural_Familia').insert([{ autor: nomeUsuarioLogado, conteudo: campo.value.trim(), fixado: false }]);
-    campo.value = "";
+function sair() {
+    location.reload();
 }
-
-async function curtirPost(id, curtidas) {
-    if (localStorage.getItem(`curtido_${id}`)) return;
-    await supabaseClient.from('Mural_Familia').update({ curtidas: curtidas + 1 }).eq('id', id);
-    localStorage.setItem(`curtido_${id}`, "true");
-}
-
-async function excluirPost(id) {
-    if (!confirm("Apagar?")) return;
-    await supabaseClient.from('Mural_Familia').delete().eq('id', id);
-}
-
-function logout() { location.reload(); }
