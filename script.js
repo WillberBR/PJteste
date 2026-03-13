@@ -229,3 +229,45 @@ function logout() {
     location.reload();
 
 }
+
+
+// Abre e fecha a caixinha de edição
+function toggleEdicao() {
+    const area = document.getElementById('area-edicao');
+    area.style.display = area.style.display === 'none' ? 'block' : 'none';
+}
+
+// Salva as mudanças no Supabase
+async function salvarPerfil() {
+    const novaBio = document.getElementById('edit-bio').value.trim();
+    const novaFoto = document.getElementById('edit-foto').value.trim();
+    const emailUsuario = document.getElementById('userName').value.trim().toLowerCase();
+
+    if (!novaBio && !novaFoto) return alert("Preencha pelo menos um campo!");
+
+    // Objeto com o que vamos atualizar
+    const dadosAtualizados = {};
+    if (novaBio) dadosAtualizados.bio = novaBio;
+    if (novaFoto) dadosAtualizados.foto_url = novaFoto;
+
+    try {
+        const resposta = await fetch(`${SUPABASE_URL}/rest/v1/usuarios_familia?email=eq.${emailUsuario}`, {
+            method: 'PATCH', // PATCH serve para atualizar dados existentes
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Content-Type': 'application/json',
+                'Prefer': 'return=representation'
+            },
+            body: JSON.stringify(dadosAtualizados)
+        });
+
+        if (resposta.ok) {
+            alert("Perfil atualizado! O site vai recarregar.");
+            location.reload(); // Recarrega para mostrar as mudanças
+        }
+    } catch (error) {
+        console.error("Erro ao atualizar:", error);
+        alert("Erro ao salvar perfil.");
+    }
+}
