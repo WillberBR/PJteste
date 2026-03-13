@@ -7,32 +7,41 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
     <div class="container">
-        <h1>🏠 Rede da Família</h1>
-        
         <div id="login-area">
-            <h3>Entrar no seu perfil</h3>
-            <input type="text" id="userName" placeholder="Nome do familiar">
-            <input type="password" id="userPass" placeholder="Sua senha única">
+            <h1>🏠 Rede da Família</h1>
+            <input type="email" id="userName" placeholder="Seu e-mail">
+            <input type="password" id="userPass" placeholder="Sua senha">
             <button onclick="fazerLogin()">Entrar</button>
-            <p id="erro" style="color: #ff4d4d;"></p>
+            <p id="erro"></p>
         </div>
 
         <div id="feed-area" style="display: none;">
-    <h2 id="bemVindo"></h2>
-    
-    <div class="mural-input">
-        <textarea id="textoMensagem" placeholder="Escreva um recado para a família..."></textarea>
-        <button onclick="postarMensagem()">Postar Recado</button>
+            
+            <div id="perfil-usuario">
+                <img id="perfil-foto" src="https://via.placeholder.com/80" alt="Foto de Perfil">
+                <div class="perfil-info">
+                    <h3 id="perfil-nome">Carregando...</h3>
+                    <p id="perfil-bio">"Frase do perfil"</p>
+                </div>
+            </div>
+
+            <hr style="border: 0; border-top: 1px solid #333; margin: 20px 0;">
+
+            <div class="mural-input">
+                <textarea id="textoMensagem" placeholder="Escreva um recado para a família..."></textarea>
+                <button onclick="postarMensagem()" class="btn-postar">Postar Recado</button>
+            </div>
+
+            <div id="mural-mensagens">
+                <p>Buscando recados...</p>
+            </div>
+
+            <button onclick="logout()" class="btn-sair">Sair da Conta</button>
+        </div>
     </div>
 
-    <div id="mural-mensagens">
-        <p>Carregando recados...</p>
-    </div>
-
-    <button onclick="logout()" class="btn-sair">Sair</button>
-</div>
-    </div>
     <script src="script.js"></script>
 </body>
 </html>
