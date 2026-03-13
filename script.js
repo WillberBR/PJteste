@@ -10,10 +10,7 @@ async function fazerLogin() {
     const senhaInput = document.getElementById('userPass');
     const msgErro = document.getElementById('erro');
 
-    if (!emailInput || !senhaInput) {
-        console.error("Campos de login não encontrados no HTML!");
-        return;
-    }
+    if (!emailInput || !senhaInput) return;
 
     const emailDigitado = emailInput.value.trim().toLowerCase();
     const senhaDigitada = senhaInput.value.trim();
@@ -30,25 +27,21 @@ async function fazerLogin() {
 
         if (dados && dados.length > 0) {
             const usuario = dados[0];
-            
-            // Define o nome de exibição
             nomeUsuarioLogado = usuario.nome_exibicao || usuario.nome || "Usuário";
 
-            // Preenche dados do perfil
+            // Preenche Perfil
             if(document.getElementById('perfil-nome')) document.getElementById('perfil-nome').innerText = nomeUsuarioLogado;
             if(document.getElementById('perfil-bio')) document.getElementById('perfil-bio').innerText = usuario.bio || "Olá, família!";
             
-            // Lógica da Foto ou Inicial (Para tirar o erro visual)
+            // Lógica da Foto ou Inicial
             const fotoElemento = document.getElementById('perfil-foto');
             if (fotoElemento) {
                 const urlFoto = usuario.foto_url || usuario.foto;
-                
                 if (urlFoto && urlFoto.trim() !== "") {
                     fotoElemento.src = urlFoto;
                 } else {
                     const inicial = nomeUsuarioLogado.charAt(0).toUpperCase();
-                    const pai = fotoElemento.parentElement;
-                    pai.innerHTML = `
+                    fotoElemento.parentElement.innerHTML = `
                         <div id="perfil-foto" style="width:80px; height:80px; border-radius:50%; background:#222; color:#00ff00; 
                                     display:flex; align-items:center; justify-content:center; 
                                     font-size:35px; font-weight:bold; border:2px solid #00ff00; margin: 0 auto; margin-bottom: 10px;">
@@ -57,10 +50,8 @@ async function fazerLogin() {
                 }
             }
 
-            // Troca as telas
             document.getElementById('login-area').style.display = 'none';
             document.getElementById('feed-area').style.display = 'block';
-
             carregarMensagens();
         } else {
             if (msgErro) msgErro.innerText = "Usuário ou senha incorretos!";
@@ -79,7 +70,6 @@ async function carregarMensagens() {
         const resposta = await fetch(`${SUPABASE_URL}/rest/v1/Mural_Familia?select=*&order=created_at.desc`, {
             headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
         });
-        
         const mensagens = await resposta.json();
         mural.innerHTML = ""; 
 
@@ -99,19 +89,17 @@ async function carregarMensagens() {
                         </button>
                         <small style="color: #666;">${new Date(msg.created_at).toLocaleString('pt-BR')}</small>
                     </div>
-                </div>
-            `;
+                </div>`;
         });
     } catch (e) {
-        console.error("Erro ao carregar mensagens:", e);
+        console.error("Erro ao carregar:", e);
     }
 }
 
-// --- 3. POSTAR NO MURAL ---
+// --- 3. POSTAR ---
 async function postarMensagem() {
-    const campoTexto = document.getElementById('textoMensagem');
-    const texto = campoTexto.value.trim();
-    if (!texto) return;
+    const campo = document.getElementById('textoMensagem');
+    if (!campo.value.trim()) return;
 
     try {
         await fetch(`${SUPABASE_URL}/rest/v1/Mural_Familia`, {
@@ -121,16 +109,16 @@ async function postarMensagem() {
                 'Authorization': `Bearer ${SUPABASE_KEY}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ autor: nomeUsuarioLogado, conteudo: texto })
+            body: JSON.stringify({ autor: nomeUsuarioLogado, conteudo: campo.value.trim() })
         });
-        campoTexto.value = ""; 
+        campo.value = ""; 
         carregarMensagens();    
     } catch (e) {
         console.error("Erro ao postar:", e);
     }
 }
 
-// --- 4. CURTIDAS COM TRAVA ---
+// --- 4. CURTIR ---
 async function curtirPost(id, curtidasAtuais) {
     if (localStorage.getItem(`curtido_${id}`)) {
         alert("Você já curtiu este recado! ❤️");
@@ -147,7 +135,6 @@ async function curtirPost(id, curtidasAtuais) {
             },
             body: JSON.stringify({ curtidas: curtidasAtuais + 1 })
         });
-
         localStorage.setItem(`curtido_${id}`, "true");
         carregarMensagens();
     } catch (e) {
@@ -155,13 +142,26 @@ async function curtirPost(id, curtidasAtuais) {
     }
 }
 
-// --- 5. EXCLUIR POST ---
+// --- 5. EXCLUIR ---
 async function excluirPost(id) {
-    if (!confirm("Tem certeza que quer apagar este recado?")) return;
+    if (!confirm("Apagar recado?")) return;
     try {
         await fetch(`${SUPABASE_URL}/rest/v1/Mural_Familia?id=eq.${id}`, {
             method: 'DELETE',
             headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
         });
         carregarMensagens();
+    } catch (e) {
+        console.error("Erro ao excluir:", e);
     }
+}
+
+// --- 6. AUXILIARES ---
+function toggleEdicao() {
+    const area = document.getElementById('area-edicao');
+    if(area) area.style.display = area.style.display === 'none' ? 'block' : 'none';
+}
+
+function logout() {
+    location.reload();
+}
