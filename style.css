@@ -107,3 +107,42 @@ body {
     background: #00ff00;
     border-radius: 10px;
 }
+
+
+
+
+
+
+ //////////////    css perfil teste
+
+
+
+ #perfil-usuario {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: #222;
+    padding: 15px;
+    border-radius: 12px;
+    text-align: left;
+}
+
+#perfil-foto {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: 2px solid #00ff00;
+    object-fit: cover;
+}
+
+.perfil-info h3 {
+    margin: 0;
+    color: #00ff00;
+}
+
+.perfil-info p {
+    margin: 5px 0 0 0;
+    color: #aaa;
+    font-size: 0.9em;
+    font-style: italic;
+}
