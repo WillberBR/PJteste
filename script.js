@@ -56,7 +56,7 @@ async function executarLogin() {
             localStorage.setItem("usuario_logado_nome", usuarios[0].nome_exibicao);
 
             alert("Bem-vindo de volta, " + usuarios[0].nome_exibicao + "!");
-            window.location.href = "personagem.html"; // Vai para a criação de personagem
+            window.location.href = "selecao.html"; // Agora vai para a lista de heróis
         } else {
             alert("E-mail ou senha incorretos. Tente novamente ou peça ajuda ao Mestre!");
         }
