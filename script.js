@@ -309,18 +309,34 @@ async function carregarMensagens() {
     }
 }
 
-// FUNÇÃO PARA CURTIR (PATCH)
+// --- FUNÇÃO PARA CURTIR COM TRAVA DE REPETIÇÃO ---
 async function curtirPost(id, curtidasAtuais) {
-    await fetch(`${SUPABASE_URL}/rest/v1/Mural_Familia?id=eq.${id}`, {
-        method: 'PATCH',
-        headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`,
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ curtidas: curtidasAtuais + 1 })
-    });
-    carregarMensagens();
+    // 1. Verifica se já curtiu este post específico nesta sessão
+    if (localStorage.getItem(`curtido_${id}`)) {
+        alert("Você já curtiu este recado! ❤️");
+        return;
+    }
+
+    try {
+        const resposta = await fetch(`${SUPABASE_URL}/rest/v1/Mural_Familia?id=eq.${id}`, {
+            method: 'PATCH',
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ curtidas: curtidasAtuais + 1 })
+        });
+
+        if (resposta.ok) {
+            // 2. Salva a "trava" no navegador
+            localStorage.setItem(`curtido_${id}`, "true");
+            // 3. Atualiza a lista na tela
+            carregarMensagens();
+        }
+    } catch (e) {
+        console.error("Erro ao curtir:", e);
+    }
 }
 
 // FUNÇÃO PARA EXCLUIR (DELETE)
