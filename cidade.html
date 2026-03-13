@@ -5,7 +5,7 @@
     <title>Mundo Medieval - Cidade</title>
     <style>
         body { background: #000; color: white; font-family: 'Segoe UI', sans-serif; text-align: center; }
-        .status-top { background: #111; padding: 10px; border-bottom: 2px solid #ffcc00; margin-bottom: 20px; }
+        .status-top { background: #111; padding: 15px; border-bottom: 2px solid #ffcc00; margin-bottom: 20px; display: flex; justify-content: center; gap: 30px; }
         .mapa-cidade { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; padding: 20px; }
         .local { 
             background: #1a1a1a; border: 2px solid #333; padding: 30px; border-radius: 15px; 
@@ -14,12 +14,14 @@
         .local:hover { border-color: #ffcc00; background: #222; transform: translateY(-5px); }
         .local small { color: #888; display: block; margin-top: 5px; }
         b { color: #ffcc00; }
+        #gold { color: #ffd700; font-size: 1.2em; }
     </style>
 </head>
 <body>
 
     <div class="status-top">
-        <span>💰 Seu Ouro: <b id="gold">0</b></span>
+        <span>💰 Ouro: <b id="gold">0</b></span>
+        <span>❤️ Vida: <b id="hp-display">0/0</b></span>
     </div>
 
     <h2>Vila do Amanhecer</h2>
@@ -52,39 +54,59 @@
 
         async function carregarDadosCidade() {
             const heroiId = localStorage.getItem("heroi_selecionado_id");
-            const { data } = await supabaseClient.from('personagens').select('*').eq('id', heroiId).single();
+            if (!heroiId) return window.location.href = "selecao.html";
+
+            const { data, error } = await supabaseClient.from('personagens').select('*').eq('id', heroiId).single();
+            
             if (data) {
                 heroi = data;
-                document.getElementById('gold').innerText = heroi.ouro || 0;
+                atualizarTela();
             }
+        }
+
+        function atualizarTela() {
+            document.getElementById('gold').innerText = heroi.ouro || 0;
+            // Cálculo baseado na sua regra de pontos
+            const maxHP = 20 + (heroi.vitalidade * 10);
+            document.getElementById('hp-display').innerText = heroi.hp_atual + "/" + maxHP;
         }
 
         async function descansar() {
             if (!heroi) return;
             if (heroi.ouro < 10) {
-                alert("Ouro insuficiente!");
+                alert("Ouro insuficiente! Vá caçar mais um pouco.");
                 return;
             }
 
-            if (confirm("Pagar 10 de ouro para descansar?")) {
-                const maxHP = 20 + (heroi.vitalidade * 10);
-                const maxMP = 10 + (heroi.inteligencia * 5);
+            // Calcula os limites reais baseados nos atributos do herói
+            const maxHP = 20 + (heroi.vitalidade * 10);
+            const maxMP = 10 + (heroi.inteligencia * 5);
+
+            if (confirm("Pagar 10 de ouro para descansar e recuperar tudo?")) {
+                const novoOuro = heroi.ouro - 10;
 
                 const { error } = await supabaseClient.from('personagens').update({ 
-                    ouro: heroi.ouro - 10, 
+                    ouro: novoOuro, 
                     hp_atual: maxHP,
                     mana: maxMP 
                 }).eq('id', heroi.id);
 
                 if (!error) {
-                    alert("Você está revigorado!");
-                    location.reload();
+                    // Atualiza localmente sem precisar dar reload na página inteira
+                    heroi.ouro = novoOuro;
+                    heroi.hp_atual = maxHP;
+                    heroi.mana = maxMP;
+                    atualizarTela();
+                    alert("✨ Você dormiu como um rei! Vida e Mana restauradas.");
+                } else {
+                    alert("Erro ao acessar o banco de dados.");
                 }
             }
         }
 
         function irParaCombate() { window.location.href = "jogo.html"; }
-        carregarDadosCidade();
+        
+        window.onload = carregarDadosCidade;
     </script>
 </body>
 </html>
