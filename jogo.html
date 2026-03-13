@@ -4,32 +4,48 @@
     <meta charset="UTF-8">
     <title>Mundo Medieval - Aventura</title>
     <style>
-        body { background: #000; color: white; font-family: sans-serif; margin: 0; }
+        body { background: #000; color: white; font-family: 'Segoe UI', sans-serif; margin: 0; overflow-x: hidden; }
         
         /* Cabeçalho do Personagem */
         .header-personagem {
             background: #111; padding: 15px; border-bottom: 2px solid #00ff00;
             display: flex; justify-content: space-around; align-items: center;
             box-shadow: 0 0 15px rgba(0, 255, 0, 0.2);
+            position: sticky; top: 0; z-index: 100;
         }
         .stat-box { text-align: center; }
-        .stat-label { font-size: 12px; color: #666; display: block; }
+        .stat-label { font-size: 10px; color: #666; display: block; text-transform: uppercase; }
         .stat-val { font-weight: bold; color: #00ff00; font-size: 18px; }
 
-        /* Área de Combate */
-        .main-game { display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        .monster-card {
-            background: #1a1a1a; border: 1px solid #333; padding: 30px;
-            border-radius: 20px; text-align: center; width: 300px; margin-top: 50px;
-            cursor: pointer; transition: 0.1s;
+        /* Painel Lateral de Atributos */
+        .painel-status {
+            position: fixed; left: 20px; top: 100px;
+            background: #111; padding: 20px; border: 1px solid #333;
+            border-radius: 12px; width: 180px; box-shadow: 5px 5px 15px rgba(0,0,0,0.5);
         }
-        .monster-card:active { transform: scale(0.95); border-color: #ff0000; }
+        .painel-status h3 { color: #fffb00; margin: 0 0 15px 0; font-size: 16px; text-align: center; }
+        .atributo-linha { display: flex; justify-content: space-between; margin-bottom: 12px; align-items: center; font-size: 14px; }
+        .btn-up { 
+            background: #00ff00; color: black; border: none; border-radius: 4px; 
+            padding: 2px 8px; cursor: pointer; font-weight: bold; transition: 0.2s;
+        }
+        .btn-up:hover { background: #fff; transform: scale(1.1); }
+
+        /* Área de Combate */
+        .main-game { display: flex; flex-direction: column; align-items: center; padding: 20px; margin-left: 200px; }
+        .monster-card {
+            background: #1a1a1a; border: 2px solid #333; padding: 40px;
+            border-radius: 25px; text-align: center; width: 280px; margin-top: 40px;
+            cursor: pointer; transition: 0.1s; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .monster-card:active { transform: scale(0.92); border-color: #ff0000; }
+        .monster-hp-bar { color: #ff4444; font-size: 20px; font-weight: bold; margin: 15px 0; }
         
         /* Log de Mensagens */
         #game-log {
-            width: 300px; height: 100px; background: #0a0a0a; border: 1px solid #222;
-            margin-top: 20px; padding: 10px; font-size: 13px; color: #aaa;
-            overflow-y: auto; border-radius: 8px;
+            width: 350px; height: 120px; background: #050505; border: 1px solid #222;
+            margin-top: 25px; padding: 12px; font-size: 13px; color: #888;
+            overflow-y: auto; border-radius: 10px; line-height: 1.6;
         }
     </style>
 </head>
@@ -37,86 +53,16 @@
 
     <div class="header-personagem">
         <div class="stat-box">
-            <span class="stat-label">HERÓI</span>
+            <span class="stat-label">Herói</span>
             <span id="display-nome" class="stat-val">...</span>
         </div>
         <div class="stat-box">
-            <span class="stat-label">NÍVEL</span>
+            <span class="stat-label">Nível</span>
             <span id="display-lvl" class="stat-val">1</span>
         </div>
         <div class="stat-box">
-            <span class="stat-label">OURO</span>
-            <span id="display-ouro" class="stat-val">0</span>
+            <span class="stat-label">Exp</span>
+            <span id="display-xp" class="stat-val">0</span>
         </div>
-    </div>
-
-    <div class="main-game">
-        <div class="monster-card" onclick="atacar()">
-            <h2 id="monster-name">👾 Slime de Esgoto</h2>
-            <p style="color: #ff4444;">HP: <span id="monster-hp">10</span></p>
-            <small style="color: #666;">Clique para atacar!</small>
-        </div>
-
-        <div id="game-log">Bem-vindo ao Reino!</div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
-        const SUPABASE_URL = 'https://zkeshycglokyycuplczn.supabase.co';
-        const SUPABASE_KEY = 'sb_publishable_iDavmG9sQzqW6jPrOCjsmQ_5ISCiZUF';
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-        let heroi = null;
-        let monsterHP = 10;
-
-        // BUSCAR DADOS DO HERÓI AO ENTRAR
-        async function carregarJogo() {
-            const email = localStorage.getItem("usuario_logado_email");
-            
-            const { data, error } = await supabaseClient
-                .from('personagens')
-                .select('*')
-                .eq('id_conta', email)
-                .single();
-
-            if (data) {
-                heroi = data;
-                document.getElementById('display-nome').innerText = heroi.nome_heroi;
-                document.getElementById('display-lvl').innerText = heroi.nivel;
-                document.getElementById('display-ouro').innerText = heroi.ouro;
-            }
-        }
-
-        function atacar() {
-            const dano = 1 + heroi.forca;
-            monsterHP -= dano;
-            
-            log(`Você deu ${dano} de dano!`);
-
-            if (monsterHP <= 0) {
-                log(`⚔️ Monstro derrotado! +2 Ouro`);
-                heroi.ouro += 2;
-                document.getElementById('display-ouro').innerText = heroi.ouro;
-                monsterHP = 10 + (heroi.nivel * 5); // Próximo monstro mais forte
-                atualizarOuroBanco();
-            }
-            
-            document.getElementById('monster-hp').innerText = monsterHP;
-        }
-
-        function log(msg) {
-            const logBox = document.getElementById('game-log');
-            logBox.innerHTML = `> ${msg}<br>` + logBox.innerHTML;
-        }
-
-        async function atualizarOuroBanco() {
-            await supabaseClient
-                .from('personagens')
-                .update({ ouro: heroi.ouro })
-                .eq('id', heroi.id);
-        }
-
-        carregarJogo();
-    </script>
-</body>
-</html>
+        <div class="stat-box">
+            <span class="stat-label
