@@ -5,14 +5,31 @@
     <title>Mundo Medieval - Aventura</title>
     <style>
         body { background: #000; color: white; font-family: 'Segoe UI', sans-serif; margin: 0; text-align: center; }
-        .header { background: #111; padding: 20px; border-bottom: 2px solid #00ff00; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        
+        /* Barra de Status Superior */
+        .header { background: #111; padding: 20px; border-bottom: 2px solid #00ff00; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; position: sticky; top: 0; z-index: 10; }
         .stat-group { background: #1a1a1a; padding: 10px; border-radius: 8px; border: 1px solid #333; }
         .stat-label { font-size: 11px; color: #888; display: block; text-transform: uppercase; }
         .stat-val { color: #00ff00; font-weight: bold; font-size: 18px; }
+
+        /* Área do Monstro */
         .monster-area { margin-top: 40px; }
         .monster-card { background: #1a1a1a; padding: 40px; border-radius: 25px; display: inline-block; cursor: pointer; border: 2px solid #333; transition: 0.1s; }
         .monster-card:active { transform: scale(0.95); border-color: #ff0000; }
+        
+        /* Log de Combate */
         #game-log { margin: 20px auto; width: 90%; max-width: 600px; background: #050505; border: 1px solid #222; padding: 15px; font-size: 14px; color: #888; height: 150px; overflow-y: auto; border-radius: 10px; text-align: left; }
+        
+        /* Janela de Level Up (Modal) */
+        #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 999; }
+        #level-up-modal { 
+            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+            background: #151515; border: 2px solid #00ff00; padding: 30px; border-radius: 20px; z-index: 1000; width: 300px; 
+        }
+        .stat-upgrade { display: flex; justify-content: space-between; align-items: center; margin: 15px 0; }
+        .btn-up { background: #00ff00; color: black; border: none; padding: 5px 15px; border-radius: 5px; font-weight: bold; cursor: pointer; }
+        .btn-up:hover { background: #00cc00; }
+
         .btn-voltar { position: fixed; top: 10px; left: 10px; background: #222; color: #fff; border: 1px solid #444; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 12px; z-index: 100; }
     </style>
 </head>
@@ -20,31 +37,26 @@
 
     <button class="btn-voltar" onclick="window.location.href='selecao.html'">⬅ Trocar Herói</button>
 
+    <div id="modal-overlay"></div>
+    <div id="level-up-modal">
+        <h2 style="color: #00ff00; margin-top: 0;">🌟 LEVEL UP!</h2>
+        <p>Pontos disponíveis: <span id="modal-pontos" style="color: #ffcc00; font-weight: bold;">0</span></p>
+        
+        <div class="stat-upgrade"><span>💪 Força</span> <button class="btn-up" onclick="distribuir('forca')">+</button></div>
+        <div class="stat-upgrade"><span>⚡ Agilidade</span> <button class="btn-up" onclick="distribuir('agilidade')">+</button></div>
+        <div class="stat-upgrade"><span>❤️ Vitalidade</span> <button class="btn-up" onclick="distribuir('vitalidade')">+</button></div>
+        <div class="stat-upgrade"><span>🧠 Inteligência</span> <button class="btn-up" onclick="distribuir('inteligencia')">+</button></div>
+
+        <button onclick="fecharModal()" style="margin-top: 20px; width: 100%; padding: 10px; background: #333; color: white; border: none; border-radius: 10px; cursor: pointer;">Salvar e Voltar</button>
+    </div>
+
     <div class="header">
-        <div class="stat-group">
-            <span class="stat-label">Herói</span>
-            <span id="display-nome" class="stat-val">...</span>
-        </div>
-        <div class="stat-group">
-            <span class="stat-label">Nível</span>
-            <span id="display-lvl" class="stat-val">1</span>
-        </div>
-        <div class="stat-group">
-            <span class="stat-label">XP</span>
-            <span id="display-xp" class="stat-val">0</span>
-        </div>
-        <div class="stat-group">
-            <span class="stat-label">Força</span>
-            <span id="display-for" class="stat-val">0</span>
-        </div>
-        <div class="stat-group">
-            <span class="stat-label">Agilidade</span>
-            <span id="display-agi" class="stat-val">0</span>
-        </div>
-        <div class="stat-group">
-            <span class="stat-label">Inteligência</span>
-            <span id="display-int" class="stat-val">0</span>
-        </div>
+        <div class="stat-group"><span class="stat-label">Herói</span><span id="display-nome" class="stat-val">...</span></div>
+        <div class="stat-group"><span class="stat-label">Nível</span><span id="display-lvl" class="stat-val">1</span></div>
+        <div class="stat-group"><span class="stat-label">XP</span><span id="display-xp" class="stat-val">0</span></div>
+        <div class="stat-group"><span class="stat-label">Força</span><span id="display-for" class="stat-val">0</span></div>
+        <div class="stat-group"><span class="stat-label">Agilidade</span><span id="display-agi" class="stat-val">0</span></div>
+        <div class="stat-group"><span class="stat-label">Inteligência</span><span id="display-int" class="stat-val">0</span></div>
     </div>
 
     <div class="monster-area">
@@ -55,7 +67,7 @@
         </div>
     </div>
 
-    <div id="game-log">>> Carregando atributos...</div>
+    <div id="game-log">>> Carregando herói...</div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="combate.js"></script>
@@ -80,7 +92,10 @@
             if (data) {
                 heroi = data;
                 atualizarInterface();
-                document.getElementById('game-log').innerText = `>> Bem-vindo, ${heroi.nome_heroi}!`;
+                escreverLog(`Herói ${heroi.nome_heroi} carregado! Pronto para lutar.`);
+                
+                // Se o herói já tiver pontos livres guardados, abre o modal
+                if (heroi.pontos_livres > 0) abrirModal();
             }
         }
 
@@ -91,12 +106,12 @@
             document.getElementById('display-for').innerText = heroi.forca;
             document.getElementById('display-agi').innerText = heroi.agilidade || 0;
             document.getElementById('display-int').innerText = heroi.inteligencia || 0;
+            document.getElementById('modal-pontos').innerText = heroi.pontos_livres || 0;
         }
 
         function atacar() {
-            if (!heroi) return;
+            if (!heroi || monsterHP <= 0) return;
             
-            // calcularDano agora usa a AGILIDADE para críticos (está no combate.js)
             const dano = calcularDano(heroi);
             monsterHP -= dano;
             
@@ -107,25 +122,67 @@
             }
 
             if (monsterHP <= 0) {
-                heroi.xp += 5;
-                escreverLog(`⚔️ Inimigo derrotado! +5 XP`);
-                
-                if (verificarLevelUp(heroi)) {
-                    escreverLog(`🌟 LEVEL UP! Você subiu para o nível ${heroi.nivel}!`);
-                }
-                
-                monsterHP = 10 + (heroi.nivel * 5);
-                atualizarInterface();
-                salvarProgresso();
+                vitoria();
             }
-            document.getElementById('monster-hp').innerText = monsterHP;
+            document.getElementById('monster-hp').innerText = Math.max(0, monsterHP);
+        }
+
+        function vitoria() {
+            heroi.xp += 5;
+            escreverLog(`⚔️ Inimigo derrotado! +5 XP`);
+            
+            if (verificarLevelUp(heroi)) {
+                escreverLog(`🌟 LEVEL UP! Você subiu para o nível ${heroi.nivel}!`);
+                heroi.pontos_livres = (heroi.pontos_livres || 0) + 5;
+                abrirModal();
+            }
+            
+            monsterHP = 10 + (heroi.nivel * 5);
+            atualizarInterface();
+            salvarProgresso();
         }
 
         async function salvarProgresso() {
             await supabaseClient
                 .from('personagens')
-                .update({ xp: heroi.xp, nivel: heroi.nivel })
+                .update({ 
+                    xp: heroi.xp, 
+                    nivel: heroi.nivel, 
+                    pontos_livres: heroi.pontos_livres 
+                })
                 .eq('id', heroi.id);
+        }
+
+        // Funções do Modal
+        function abrirModal() {
+            document.getElementById('modal-overlay').style.display = 'block';
+            document.getElementById('level-up-modal').style.display = 'block';
+            document.getElementById('modal-pontos').innerText = heroi.pontos_livres;
+        }
+
+        function fecharModal() {
+            document.getElementById('modal-overlay').style.display = 'none';
+            document.getElementById('level-up-modal').style.display = 'none';
+            atualizarInterface();
+        }
+
+        async function distribuir(atributo) {
+            if (heroi.pontos_livres > 0) {
+                heroi[atributo]++;
+                heroi.pontos_livres--;
+                
+                document.getElementById('modal-pontos').innerText = heroi.pontos_livres;
+                
+                await supabaseClient
+                    .from('personagens')
+                    .update({ 
+                        [atributo]: heroi[atributo], 
+                        pontos_livres: heroi.pontos_livres 
+                    })
+                    .eq('id', heroi.id);
+                
+                atualizarInterface();
+            }
         }
 
         function escreverLog(msg) {
