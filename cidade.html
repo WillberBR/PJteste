@@ -48,5 +48,17 @@
             alert("O dono do estabelecimento saiu para almoçar. Volte em breve!");
         }
     </script>
+    
 </body>
 </html>
+
+
+async function carregarDadosCidade() {
+    const heroiId = localStorage.getItem("heroi_selecionado_id");
+    const { data } = await supabase.from('personagens').select('ouro').eq('id', heroiId).single();
+    
+    if (data) {
+        document.getElementById('gold').innerText = data.ouro || 0;
+    }
+}
+carregarDadosCidade();

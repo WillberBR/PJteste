@@ -1,4 +1,5 @@
 // combate.js
+
 function calcularDano(heroi) {
     let danoBase = heroi.forca * 2;
     
@@ -7,8 +8,7 @@ function calcularDano(heroi) {
     let dado = Math.random() * 100;
 
     if (dado < chanceCritico) {
-        console.log("🔥 CRÍTICO!");
-        return danoBase * 2; 
+        return danoBase * 2; // Dano crítico dobra o valor
     }
 
     return danoBase;
@@ -22,4 +22,11 @@ function verificarLevelUp(heroi) {
         return true;
     }
     return false;
+}
+
+// Função que define quanto ouro o monstro solta
+function sortearOuro(nivelMonstro) {
+    // Sorteia entre 1 e 5 de ouro, multiplicado pelo nível do monstro
+    let base = Math.floor(Math.random() * 5) + 1;
+    return base * nivelMonstro;
 }
