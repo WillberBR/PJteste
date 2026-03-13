@@ -88,23 +88,45 @@
     </div>
 
     <script>
-        function fazerLogin() {
-            // Pegamos os valores digitados
-            const usuario = document.getElementById('campoUsuario').value;
-            const senha = document.getElementById('campoSenha').value;
-            const erro = document.getElementById('mensagemErro');
-
-            // Definimos uma senha de teste (No futuro isso virá do banco de dados)
-            if (usuario === "admin" && senha === "1234") {
-                // Se estiver certo, esconde o login e mostra o conteúdo
-                document.getElementById('areaLogin').style.display = 'none';
-                document.getElementById('areaPrivada').style.display = 'block';
-            } else {
-                // Se estiver errado, mostra erro
-                erro.innerText = "Usuário ou senha incorretos!";
-            }
+    // Esta parte roda assim que o site abre
+    window.onload = function() {
+        const usuarioSalvo = localStorage.getItem('usuarioLogado');
+        
+        // Se já existir um usuário salvo, pula direto para a área privada
+        if (usuarioSalvo) {
+            mostrarAreaPrivada(usuarioSalvo);
         }
-    </script>
+    };
+
+    function fazerLogin() {
+        const usuario = document.getElementById('campoUsuario').value;
+        const senha = document.getElementById('campoSenha').value;
+        const erro = document.getElementById('mensagemErro');
+
+        if (usuario === "admin" && senha === "1234") {
+            // SALVANDO NO NAVEGADOR:
+            localStorage.setItem('usuarioLogado', usuario);
+            
+            mostrarAreaPrivada(usuario);
+        } else {
+            erro.innerText = "Usuário ou senha incorretos!";
+        }
+    }
+
+    function mostrarAreaPrivada(nome) {
+        document.getElementById('areaLogin').style.display = 'none';
+        document.getElementById('areaPrivada').style.display = 'block';
+        // Personaliza a mensagem com o nome salvo
+        document.querySelector('#areaPrivada h2').innerText = "Bem-vindo, " + nome + "!";
+    }
+
+    function logout() {
+        // Limpa o que foi salvo
+        localStorage.removeItem('usuarioLogado');
+        location.reload(); // Recarrega a página para voltar ao login
+    }
+</script>
+
 
 </body>
 </html>
