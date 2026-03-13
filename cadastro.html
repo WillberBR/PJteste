@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro - Rede da Família</title>
+    <link rel="stylesheet" href="style.css"> <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body style="background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;">
+
+    <div class="login-card" style="background: #111; padding: 30px; border-radius: 15px; border: 1px solid #00ff00; box-shadow: 0 0 20px rgba(0, 255, 0, 0.1); width: 320px; text-align: center;">
+        <h2 style="color: #00ff00; text-shadow: 0 0 10px #00ff00; margin-bottom: 25px;">🏠 Novo Integrante</h2>
+        
+        <input type="text" id="regNome" placeholder="Nome (Ex: Tio João)" style="width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #333; background: #222; color: #fff; box-sizing: border-box;">
+        
+        <input type="email" id="regEmail" placeholder="E-mail" style="width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #333; background: #222; color: #fff; box-sizing: border-box;">
+        
+        <input type="password" id="regPass" placeholder="Senha" style="width: 100%; padding: 12px; margin-bottom: 25px; border-radius: 8px; border: 1px solid #333; background: #222; color: #fff; box-sizing: border-box;">
+        
+        <button onclick="fazerCadastro()" style="width: 100%; padding: 15px; background: #00ff00; color: #000; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; text-transform: uppercase;">Finalizar Cadastro</button>
+        
+        <p style="color: #666; margin-top: 20px; cursor: pointer; font-size: 14px;" onclick="window.location.href='index.html'">← Voltar para o Login</p>
+    </div>
+
+    <script src="cadastro.js"></script>
+</body>
+</html>
