@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mural Família - Premium</title>
+    <title>Mural Família - Admin Mode</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
@@ -12,40 +12,37 @@
     <style>
         body { background-color: #121212; color: white; font-family: sans-serif; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
         .container { width: 100%; max-width: 450px; }
-        .main-title { border: 2px solid #00ff00; padding: 15px; border-radius: 10px; color: #00ff00; text-align: center; margin-bottom: 20px; }
+        .main-title { border: 2px solid #00ff00; padding: 15px; border-radius: 10px; color: #00ff00; text-align: center; margin-bottom: 20px; box-shadow: 0 0 10px rgba(0,255,0,0.2); }
         .box { background: #1e1e1e; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); text-align: center; margin-bottom: 15px; }
         input { padding: 12px; border-radius: 5px; border: 1px solid #333; margin-bottom: 10px; background: #121212; color: white; width: 85%; }
-        .btn { background-color: #00ff00; color: #121212; padding: 12px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; width: 95%; margin-top: 5px; }
-        .btn-alt { background: transparent; color: #00ff00; border: 1px solid #00ff00; margin-top: 15px; font-size: 0.8em; width: auto; padding: 5px 15px; }
-        .recado-card { background: #252525; padding: 15px; border-radius: 8px; margin-top: 15px; border-left: 5px solid #00ff00; position: relative; }
-        .excluir-btn { position: absolute; top: 10px; right: 10px; color: #ff4444; cursor: pointer; }
+        .btn { background-color: #00ff00; color: #121212; padding: 12px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; width: 95%; }
+        .recado-card { background: #252525; padding: 15px; border-radius: 8px; margin-top: 15px; position: relative; border-left: 5px solid #555; }
+        .excluir-btn { position: absolute; top: 10px; right: 10px; color: #ff4444; cursor: pointer; font-size: 1.2em; font-weight: bold; padding: 5px; }
         .hora { font-size: 0.7em; color: #888; display: block; margin-top: 5px; }
+        .admin-tag { color: #00ff00; font-size: 0.7em; border: 1px solid #00ff00; padding: 2px 5px; border-radius: 4px; margin-left: 5px; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1 class="main-title">Mural da Família</h1>
+        <h1 class="main-title">Mural Digital</h1>
 
         <div id="areaAuth" class="box">
             <h3 id="authTitulo">Entrar</h3>
             <input type="email" id="email" placeholder="E-mail">
             <input type="password" id="senha" placeholder="Senha">
-            <button class="btn" id="btnAcao" onclick="autenticar()">ENTRAR</button>
-            <br>
-            <button class="btn-alt" id="btnTrocar" onclick="alternarAuth()">Não tem conta? Cadastre-se</button>
+            <button class="btn" onclick="autenticar()">AVANÇAR</button>
+            <p onclick="alternarAuth()" style="color:#00ff00; font-size:0.8em; margin-top:15px; cursor:pointer;">Trocar entre Login/Cadastro</p>
         </div>
 
         <div id="areaPrivada" style="display: none;">
             <div class="box">
                 <h3 id="boasVindas">Olá!</h3>
-                <input type="text" id="novoRecado" placeholder="Digite sua mensagem...">
-                <button class="btn" onclick="postarRecado()">POSTAR NA NUVEM</button>
+                <input type="text" id="novoRecado" placeholder="O que quer dizer para a família?">
+                <button class="btn" onclick="postarRecado()">POSTAR RECADO</button>
             </div>
             <div id="listaRecados"></div>
-            <div style="text-align: center;">
-                <button class="btn" onclick="logout()" style="background:#333; color:white; width:50%; margin-top:30px;">SAIR</button>
-            </div>
+            <button onclick="logout()" style="background:none; border:none; color:#888; margin-top:20px; width:100%">SAIR DO SISTEMA</button>
         </div>
     </div>
 
@@ -60,33 +57,26 @@
             appId: "1:577356833001:web:0cdf6bca4c4289dadcd078"
         };
 
+        // SEU ID DE ADMINISTRADOR
+        const MEU_UID_ADMIN = "Uo8nMtKYfiT4ybqeCTbrD1Howfd2";
+
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const database = firebase.database();
 
         let modoCadastro = false;
-
         function alternarAuth() {
             modoCadastro = !modoCadastro;
             document.getElementById('authTitulo').innerText = modoCadastro ? "Criar Conta" : "Entrar";
-            document.getElementById('btnAcao').innerText = modoCadastro ? "CADASTRAR" : "ENTRAR";
-            document.getElementById('btnTrocar').innerText = modoCadastro ? "Já tem conta? Entre aqui" : "Não tem conta? Cadastre-se";
         }
 
         function autenticar() {
-            const email = document.getElementById('email').value;
-            const senha = document.getElementById('senha').value;
-
-            if (modoCadastro) {
-                auth.createUserWithEmailAndPassword(email, senha)
-                    .catch(erro => alert("Erro ao cadastrar: " + erro.message));
-            } else {
-                auth.signInWithEmailAndPassword(email, senha)
-                    .catch(erro => alert("Erro ao entrar: " + erro.message));
-            }
+            const e = document.getElementById('email').value;
+            const s = document.getElementById('senha').value;
+            if(modoCadastro) auth.createUserWithEmailAndPassword(e, s);
+            else auth.signInWithEmailAndPassword(e, s);
         }
 
-        // Observador: Detecta se o usuário logou ou saiu
         auth.onAuthStateChanged(user => {
             if (user) {
                 document.getElementById('areaAuth').style.display = 'none';
@@ -101,8 +91,7 @@
 
         function postarRecado() {
             const input = document.getElementById('novoRecado');
-            if (input.value.trim() === "") return;
-
+            if (!input.value.trim()) return;
             database.ref('mural').push({
                 texto: input.value,
                 autor: auth.currentUser.email.split('@')[0],
@@ -113,36 +102,36 @@
         }
 
         function ouvirRecados() {
-            database.ref('mural').on('value', (snapshot) => {
+            database.ref('mural').on('value', snap => {
                 const lista = document.getElementById('listaRecados');
                 lista.innerHTML = "";
-                const dados = snapshot.val();
+                const dados = snap.val();
                 if (dados) {
                     Object.keys(dados).reverse().forEach(key => {
                         const item = dados[key];
-                        // Só mostra botão de excluir se o recado for seu
-                        const bExcluir = item.uid === auth.currentUser.uid ? 
-                            `<span class="excluir-btn" onclick="excluirRecado('${key}')">X</span>` : "";
-                        
+                        const souAdmin = auth.currentUser.uid === MEU_UID_ADMIN;
+                        const souDono = item.uid === auth.currentUser.uid;
+
+                        // Admin e donos podem excluir
+                        const bExcluir = (souAdmin || souDono) ? `<span class="excluir-btn" onclick="excluirRecado('${key}')">×</span>` : "";
+                        const tagAdmin = item.uid === MEU_UID_ADMIN ? `<span class="admin-tag">ADMIN</span>` : "";
+
                         lista.innerHTML += `
-                            <div class="recado-card">
+                            <div class="recado-card" style="border-left-color: ${souDono ? '#00ff00' : '#555'}">
                                 ${bExcluir}
-                                <strong>${item.autor}:</strong> ${item.texto}
+                                <strong>${item.autor}${tagAdmin}:</strong> ${item.texto}
                                 <span class="hora">${item.data}</span>
-                            </div>
-                        `;
+                            </div>`;
                     });
                 }
             });
         }
 
         function excluirRecado(id) {
-            database.ref('mural/' + id).remove();
+            if(confirm("Deseja apagar este recado?")) database.ref('mural/' + id).remove();
         }
 
-        function logout() {
-            auth.signOut();
-        }
+        function logout() { auth.signOut(); }
     </script>
 </body>
 </html>
