@@ -3,22 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meu Primeiro Site</title>
+    <title>Meu Portfólio Mobile</title>
     <style>
-        body { 
-            background-color: #121212; 
-            color: white; 
-            font-family: Arial, sans-serif; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            height: 100vh; 
-            margin: 0; 
+        body {
+            background-color: #121212;
+            color: white;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            display: flex;
+            flex-direction: column; /* Organiza em coluna */
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
         }
-        h1 { border: 2px solid #00ff00; padding: 20px; border-radius: 10px; }
+
+        h1 {
+            border: 2px solid #00ff00;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.3); /* Brilho suave */
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-align: center;
+        }
+
+        .container {
+            text-align: center;
+            animation: fadeIn 1.5s ease-in;
+        }
+
+        .btn {
+            background-color: #00ff00;
+            color: #121212;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            transition: 0.3s;
+            margin-top: 20px;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            background-color: #00cc00;
+            transform: scale(1.05); /* Aumenta um pouco ao passar o dedo/mouse */
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 <body>
-    <h1>Site sincronizado: PC + Android</h1>
+
+    <div class="container">
+        <h1>Sincronizado: PC + Android</h1>
+        <p>Desenvolvido inteiramente via Acode & GitHub</p>
+        
+        <a href="https://github.com/WillberBR" class="btn">VER MEU GITHUB</a>
+    </div>
+
 </body>
 </html>
