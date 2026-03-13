@@ -1,53 +1,33 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rede da Família</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Login - MMORPG Medieval</title>
+    <style>
+        body { background:#000; color:white; font-family:sans-serif; display:flex; justify-content:center; align-items:center; height:100vh; margin:0; }
+        .card { background:#111; padding:30px; border-radius:15px; border:1px solid #333; width:300px; text-align:center; box-shadow:0 0 20px rgba(0,255,0,0.1); }
+        h1 { color:#00ff00; text-shadow:0 0 10px #00ff00; margin-bottom:25px; font-size:22px; }
+        input { width:100%; padding:12px; margin-bottom:12px; background:#222; border:1px solid #444; color:white; border-radius:8px; box-sizing:border-box; outline:none; }
+        input:focus { border-color:#00ff00; }
+        button { width:100%; padding:15px; background:#00ff00; color:black; font-weight:bold; border:none; border-radius:8px; cursor:pointer; transition:0.3s; font-size:16px; }
+        button:hover { background:#00cc00; transform:scale(1.02); }
+        .link-cadastro { color:#666; font-size:13px; margin-top:20px; display:block; text-decoration:none; transition: 0.3s; }
+        .link-cadastro:hover { color:#00ff00; }
+    </style>
 </head>
 <body>
 
-    <div class="container">
-        <div id="login-area">
-            <h1>🏠 Rede da Família</h1>
-            <input type="email" id="loginEmail" placeholder="Seu e-mail">
-            <input type="password" id="loginSenha" placeholder="Sua senha">
-            <button onclick="fazerLogin()">Entrar</button>
-            <p id="erro"></p>
-            
-            <button onclick="window.location.href='cadastro.html'" style="background: transparent; border: 1px solid #444; color: #888; margin-top: 15px; width: 100%; padding: 10px; border-radius: 8px; cursor: pointer; font-size: 13px;">
-                Não tem conta? Criar Perfil
-            </button>
-        </div>
-
-        <div id="feed-area" style="display: none;">
-            
-            <div id="perfil-usuario" style="text-align: center;">
-                <div id="perfil-foto-container"></div>
-                
-                <div class="perfil-info">
-                    <h3 id="perfil-nome">Carregando...</h3>
-                    <p id="perfil-bio">"Bem-vindo à nossa rede!"</p>
-                </div>
-            </div>
-
-            <hr style="border: 0; border-top: 1px solid #333; margin: 20px 0;">
-
-            <div class="mural-input">
-                <textarea id="novoRecado" placeholder="Escreva um recado para a família..."></textarea>
-                <button onclick="postarRecado()" class="btn-postar">Postar Recado</button>
-            </div>
-
-            <div id="mural-recados">
-                <p>Buscando recados...</p>
-            </div>
-
-            <button onclick="sair()" class="btn-sair">Sair da Conta</button>
-        </div>
+    <div class="card">
+        <h1>🏰 ENTRAR NO REINO</h1>
+        <input type="email" id="loginEmail" placeholder="Seu e-mail">
+        <input type="password" id="loginSenha" placeholder="Sua senha">
+        <button onclick="executarLogin()">LOGAR</button>
+        
+        <a href="cadastro.html" class="link-cadastro">Não tem conta? Criar Perfil</a>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="script.js"></script>
 </body>
 </html>

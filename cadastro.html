@@ -3,25 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cadastro - Rede da Família</title>
-    <link rel="stylesheet" href="style.css"> <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <title>Cadastro - MMORPG Medieval</title>
+    <style>
+        body { background:#000; color:white; font-family:sans-serif; display:flex; justify-content:center; align-items:center; height:100vh; margin:0; }
+        .card { background:#111; padding:30px; border-radius:15px; border:1px solid #333; width:300px; text-align:center; box-shadow:0 0 20px rgba(0,217,255,0.1); }
+        h1 { color:#00d9ff; text-shadow:0 0 10px #00d9ff; margin-bottom:25px; font-size:22px; }
+        input { width:100%; padding:12px; margin-bottom:12px; background:#222; border:1px solid #444; color:white; border-radius:8px; box-sizing:border-box; outline:none; }
+        input:focus { border-color:#00d9ff; }
+        button { width:100%; padding:15px; background:#00d9ff; color:black; font-weight:bold; border:none; border-radius:8px; cursor:pointer; transition:0.3s; font-size:16px; }
+        button:hover { background:#00b4d8; transform:scale(1.02); }
+        .link-login { color:#666; font-size:13px; margin-top:20px; display:block; text-decoration:none; }
+        .link-login:hover { color:#00d9ff; }
+    </style>
 </head>
-<body style="background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;">
+<body>
 
-    <div class="login-card" style="background: #111; padding: 30px; border-radius: 15px; border: 1px solid #00ff00; box-shadow: 0 0 20px rgba(0, 255, 0, 0.1); width: 320px; text-align: center;">
-        <h2 style="color: #00ff00; text-shadow: 0 0 10px #00ff00; margin-bottom: 25px;">🏠 Novo Integrante</h2>
+    <div class="card">
+        <h1>📜 NOVO PERFIL</h1>
+        <input type="text" id="cadNome" placeholder="Seu Nome Real">
+        <input type="email" id="cadEmail" placeholder="Seu e-mail">
+        <input type="password" id="cadSenha" placeholder="Crie uma senha">
+        <button onclick="executarCadastro()">CADASTRAR</button>
         
-        <input type="text" id="regNome" placeholder="Nome (Ex: Tio João)" style="width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #333; background: #222; color: #fff; box-sizing: border-box;">
-        
-        <input type="email" id="regEmail" placeholder="E-mail" style="width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #333; background: #222; color: #fff; box-sizing: border-box;">
-        
-        <input type="password" id="regPass" placeholder="Senha" style="width: 100%; padding: 12px; margin-bottom: 25px; border-radius: 8px; border: 1px solid #333; background: #222; color: #fff; box-sizing: border-box;">
-        
-        <button onclick="fazerCadastro()" style="width: 100%; padding: 15px; background: #00ff00; color: #000; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; text-transform: uppercase;">Finalizar Cadastro</button>
-        
-        <p style="color: #666; margin-top: 20px; cursor: pointer; font-size: 14px;" onclick="window.location.href='index.html'">← Voltar para o Login</p>
+        <a href="index.html" class="link-login">Já tem conta? Voltar ao Login</a>
     </div>
 
-    <script src="cadastro.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="script.js"></script>
 </body>
 </html>
