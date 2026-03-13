@@ -3,135 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mural Família - Admin Mode</title>
-    
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
-
-    <style>
-        body { background-color: #121212; color: white; font-family: sans-serif; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .container { width: 100%; max-width: 450px; }
-        .main-title { border: 2px solid #00ff00; padding: 15px; border-radius: 10px; color: #00ff00; text-align: center; margin-bottom: 20px; box-shadow: 0 0 10px rgba(0,255,0,0.2); }
-        .box { background: #1e1e1e; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); text-align: center; margin-bottom: 15px; }
-        input { padding: 12px; border-radius: 5px; border: 1px solid #333; margin-bottom: 10px; background: #121212; color: white; width: 85%; }
-        .btn { background-color: #00ff00; color: #121212; padding: 12px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; width: 95%; }
-        .recado-card { background: #252525; padding: 15px; border-radius: 8px; margin-top: 15px; position: relative; border-left: 5px solid #555; }
-        .excluir-btn { position: absolute; top: 10px; right: 10px; color: #ff4444; cursor: pointer; font-size: 1.2em; font-weight: bold; padding: 5px; }
-        .hora { font-size: 0.7em; color: #888; display: block; margin-top: 5px; }
-        .admin-tag { color: #00ff00; font-size: 0.7em; border: 1px solid #00ff00; padding: 2px 5px; border-radius: 4px; margin-left: 5px; }
-    </style>
+    <title>Rede da Família</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
     <div class="container">
-        <h1 class="main-title">Mural Digital</h1>
-
-        <div id="areaAuth" class="box">
-            <h3 id="authTitulo">Entrar</h3>
-            <input type="email" id="email" placeholder="E-mail">
-            <input type="password" id="senha" placeholder="Senha">
-            <button class="btn" onclick="autenticar()">AVANÇAR</button>
-            <p onclick="alternarAuth()" style="color:#00ff00; font-size:0.8em; margin-top:15px; cursor:pointer;">Trocar entre Login/Cadastro</p>
+        <h1>🏠 Rede da Família</h1>
+        
+        <div id="login-area">
+            <h3>Entrar no seu perfil</h3>
+            <input type="text" id="userName" placeholder="Nome do familiar">
+            <input type="password" id="userPass" placeholder="Sua senha única">
+            <button onclick="fazerLogin()">Entrar</button>
+            <p id="erro" style="color: #ff4d4d;"></p>
         </div>
 
-        <div id="areaPrivada" style="display: none;">
-            <div class="box">
-                <h3 id="boasVindas">Olá!</h3>
-                <input type="text" id="novoRecado" placeholder="O que quer dizer para a família?">
-                <button class="btn" onclick="postarRecado()">POSTAR RECADO</button>
-            </div>
-            <div id="listaRecados"></div>
-            <button onclick="logout()" style="background:none; border:none; color:#888; margin-top:20px; width:100%">SAIR DO SISTEMA</button>
+        <div id="feed-area" style="display: none;">
+            <h2 id="bemVindo"></h2>
+            <p>Este é o nosso espaço privado!</p>
+            <button onclick="logout()">Sair</button>
         </div>
     </div>
-
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyBnxNTCOWLPPsrIlu2_Kgd2l0qTZP-aUt8",
-            authDomain: "mural-familia-9223d.firebaseapp.com",
-            databaseURL: "https://mural-familia-9223d-default-rtdb.firebaseio.com/",
-            projectId: "mural-familia-9223d",
-            storageBucket: "mural-familia-9223d.firebasestorage.app",
-            messagingSenderId: "577356833001",
-            appId: "1:577356833001:web:0cdf6bca4c4289dadcd078"
-        };
-
-        // SEU ID DE ADMINISTRADOR
-        const MEU_UID_ADMIN = "Uo8nMtKYfiT4ybqeCTbrD1Howfd2";
-
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const database = firebase.database();
-
-        let modoCadastro = false;
-        function alternarAuth() {
-            modoCadastro = !modoCadastro;
-            document.getElementById('authTitulo').innerText = modoCadastro ? "Criar Conta" : "Entrar";
-        }
-
-        function autenticar() {
-            const e = document.getElementById('email').value;
-            const s = document.getElementById('senha').value;
-            if(modoCadastro) auth.createUserWithEmailAndPassword(e, s);
-            else auth.signInWithEmailAndPassword(e, s);
-        }
-
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                document.getElementById('areaAuth').style.display = 'none';
-                document.getElementById('areaPrivada').style.display = 'block';
-                document.getElementById('boasVindas').innerText = "Olá, " + user.email.split('@')[0] + "!";
-                ouvirRecados();
-            } else {
-                document.getElementById('areaAuth').style.display = 'block';
-                document.getElementById('areaPrivada').style.display = 'none';
-            }
-        });
-
-        function postarRecado() {
-            const input = document.getElementById('novoRecado');
-            if (!input.value.trim()) return;
-            database.ref('mural').push({
-                texto: input.value,
-                autor: auth.currentUser.email.split('@')[0],
-                uid: auth.currentUser.uid,
-                data: new Date().toLocaleString('pt-BR')
-            });
-            input.value = "";
-        }
-
-        function ouvirRecados() {
-            database.ref('mural').on('value', snap => {
-                const lista = document.getElementById('listaRecados');
-                lista.innerHTML = "";
-                const dados = snap.val();
-                if (dados) {
-                    Object.keys(dados).reverse().forEach(key => {
-                        const item = dados[key];
-                        const souAdmin = auth.currentUser.uid === MEU_UID_ADMIN;
-                        const souDono = item.uid === auth.currentUser.uid;
-
-                        // Admin e donos podem excluir
-                        const bExcluir = (souAdmin || souDono) ? `<span class="excluir-btn" onclick="excluirRecado('${key}')">×</span>` : "";
-                        const tagAdmin = item.uid === MEU_UID_ADMIN ? `<span class="admin-tag">ADMIN</span>` : "";
-
-                        lista.innerHTML += `
-                            <div class="recado-card" style="border-left-color: ${souDono ? '#00ff00' : '#555'}">
-                                ${bExcluir}
-                                <strong>${item.autor}${tagAdmin}:</strong> ${item.texto}
-                                <span class="hora">${item.data}</span>
-                            </div>`;
-                    });
-                }
-            });
-        }
-
-        function excluirRecado(id) {
-            if(confirm("Deseja apagar este recado?")) database.ref('mural/' + id).remove();
-        }
-
-        function logout() { auth.signOut(); }
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
