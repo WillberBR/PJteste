@@ -9,10 +9,33 @@
         
         .lista-personagens { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; width: 100%; max-width: 900px; }
         
-        .card-heroi { background: #151515; border: 2px solid #333; border-radius: 15px; padding: 20px; cursor: pointer; transition: 0.3s; position: relative; overflow: hidden; }
+        /* Card do Personagem */
+        .card-heroi { 
+            background: #151515; border: 2px solid #333; border-radius: 15px; 
+            padding: 20px; cursor: pointer; transition: 0.3s; position: relative; overflow: hidden; 
+        }
         .card-heroi:hover { border-color: #00ff00; transform: translateY(-5px); background: #1a1a1a; }
         .card-heroi h3 { margin: 0 0 10px 0; color: #fff; }
         .card-heroi p { margin: 5px 0; font-size: 14px; color: #aaa; }
+        
+        /* Botão Deletar (O que você adicionou no CSS) */
+        .btn-deletar {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: bold;
+            transition: 0.3s;
+            z-index: 10;
+        }
+        .btn-deletar:hover { background: #cc0000; transform: scale(1.1); }
+
         .lvl-badge { position: absolute; top: 10px; right: 10px; background: #00ff00; color: black; padding: 2px 8px; border-radius: 5px; font-weight: bold; font-size: 12px; }
 
         .btn-novo { margin-top: 40px; background: transparent; color: #00ff00; border: 2px solid #00ff00; padding: 12px 25px; border-radius: 10px; cursor: pointer; font-weight: bold; transition: 0.3s; }
@@ -59,10 +82,12 @@
                 listaDiv.innerHTML = "";
 
                 if (data && data.length > 0) {
-                    msg.innerText = "Escolha um herói para entrar no mundo.";
+                    msg.innerText = "Escolha um herói ou remova os antigos.";
                     data.forEach(heroi => {
                         const card = document.createElement('div');
                         card.className = 'card-heroi';
+                        
+                        // Clique no card seleciona o herói
                         card.onclick = () => selecionar(heroi);
                         
                         card.innerHTML = `
@@ -70,6 +95,7 @@
                             <h3>${heroi.nome_heroi}</h3>
                             <p>🛡️ Classe: ${heroi.classe || 'Guerreiro'}</p>
                             <p>💪 Força: ${heroi.forca} | ❤️ Vit: ${heroi.vitalidade}</p>
+                            <button class="btn-deletar" onclick="deletarHeroi(event, ${heroi.id}, '${heroi.nome_heroi}')">DELETAR</button>
                         `;
                         listaDiv.appendChild(card);
                     });
@@ -83,9 +109,32 @@
         }
 
         function selecionar(heroi) {
-            // Salva o ID do herói escolhido para o jogo carregar o certo!
             localStorage.setItem("heroi_selecionado_id", heroi.id);
             window.location.href = "jogo.html";
+        }
+
+        // FUNÇÃO DE DELETAR CORRIGIDA
+        async function deletarHeroi(event, id, nome) {
+            event.stopPropagation(); // Impede de abrir o jogo ao clicar no botão
+
+            const confirmacao = confirm(`Tem certeza que deseja apagar o herói "${nome}"?`);
+            
+            if (confirmacao) {
+                try {
+                    const { error } = await supabaseClient
+                        .from('personagens')
+                        .delete()
+                        .eq('id', id);
+
+                    if (error) throw error;
+
+                    alert("Herói removido com sucesso!");
+                    location.reload(); // Atualiza a lista
+                } catch (err) {
+                    console.error("Erro ao deletar:", err);
+                    alert("Não foi possível deletar o personagem.");
+                }
+            }
         }
 
         carregarPersonagens();
