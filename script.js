@@ -7,8 +7,16 @@ let nomeUsuarioLogado = "";
 
 // FUNÇÃO DE LOGIN
 async function fazerLogin() {
-    const email = document.getElementById('loginEmail').value.trim().toLowerCase();
-    const senha = document.getElementById('loginSenha').value.trim();
+    const emailElement = document.getElementById('loginEmail');
+    const senhaElement = document.getElementById('loginSenha');
+
+    if (!emailElement || !senhaElement) {
+        alert("Erro técnico: Campos de login não encontrados no HTML.");
+        return;
+    }
+
+    const email = emailElement.value.trim().toLowerCase();
+    const senha = senhaElement.value.trim();
 
     try {
         const { data: usuarios, error } = await supabaseClient
@@ -57,9 +65,11 @@ function gerarAvatarNeon(nome) {
     `;
 }
 
-// FUNÇÃO PARA CARREGAR MURAL (TABELA CORRIGIDA PARA: Mural_Familia)
+// FUNÇÃO PARA CARREGAR MURAL
 async function carregarMensagens() {
     const mural = document.getElementById('mural-recados');
+    if (!mural) return;
+    
     mural.innerHTML = "Carregando recados...";
 
     try {
@@ -81,7 +91,6 @@ async function carregarMensagens() {
                 <span style="color:#FFD700; font-size:10px; margin-left:4px; font-weight: bold;">★ VERIFICADO</span>
             ` : '';
 
-            // Lógica do botão apagar: Willber apaga tudo, outros só o que postaram
             const podeApagar = (nomeUsuarioLogado.toLowerCase() === "willber" || nomeUsuarioLogado === msg.autor);
 
             mural.innerHTML += `
@@ -105,9 +114,11 @@ async function carregarMensagens() {
     }
 }
 
-// FUNÇÃO PARA POSTAR (TABELA CORRIGIDA PARA: Mural_Familia)
+// FUNÇÃO PARA POSTAR
 async function postarRecado() {
-    const texto = document.getElementById('novoRecado').value.trim();
+    const textoArea = document.getElementById('novoRecado');
+    const texto = textoArea ? textoArea.value.trim() : "";
+    
     if (!texto) return;
 
     const { error } = await supabaseClient
@@ -115,7 +126,29 @@ async function postarRecado() {
         .insert([{ autor: nomeUsuarioLogado, conteudo: texto }]);
 
     if (!error) {
-        document.getElementById('novoRecado').value = "";
+        textoArea.value = "";
         carregarMensagens();
     } else {
         alert("Erro ao postar: " + error.message);
+    }
+}
+
+// FUNÇÃO PARA APAGAR MENSAGEM
+async function apagarMensagem(id) {
+    if (!confirm("Tem certeza que deseja apagar este recado?")) return;
+
+    const { error } = await supabaseClient
+        .from('Mural_Familia')
+        .delete()
+        .eq('id', id);
+
+    if (error) {
+        alert("Erro ao apagar: " + error.message);
+    } else {
+        carregarMensagens();
+    }
+}
+
+function sair() {
+    location.reload();
+}
