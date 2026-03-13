@@ -2,38 +2,30 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Criação de Herói - MMORPG</title>
+    <title>Mundo Medieval - Criar Herói</title>
     <style>
-        body { background: #000; color: white; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .card { background: #111; padding: 30px; border-radius: 20px; border: 1px solid #333; width: 350px; text-align: center; box-shadow: 0 0 30px rgba(0,255,0,0.05); }
-        h2 { color: #00ff00; text-transform: uppercase; letter-spacing: 2px; margin-top: 0; text-shadow: 0 0 10px #00ff00; }
-        input, select { width: 100%; padding: 12px; margin-bottom: 15px; background: #222; border: 1px solid #444; color: white; border-radius: 8px; box-sizing: border-box; outline: none; }
-        input:focus { border-color: #00ff00; }
-        .stats-container { background: #0a0a0a; padding: 15px; border-radius: 12px; border: 1px solid #222; margin-bottom: 20px; }
-        .stat-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-        .btn-ponto { background: #333; color: white; border: none; width: 30px; height: 30px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; }
-        .btn-ponto:hover { background: #444; color: #00ff00; }
-        .val-status { color: #00ff00; font-weight: bold; min-width: 25px; display: inline-block; }
-        .btn-finalizar { width: 100%; padding: 15px; background: #00ff00; color: black; font-weight: bold; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; transition: 0.3s; box-shadow: 0 0 15px rgba(0,255,0,0.2); }
-        .btn-finalizar:hover { background: #00cc00; transform: scale(1.02); }
-        
-        @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
-        .pop-anim { animation: pop 0.3s ease-out; }
+        body { background: #0b0b0b; color: white; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { background: #151515; padding: 30px; border-radius: 20px; border: 1px solid #333; width: 350px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); text-align: center; }
+        h2 { color: #00ff00; text-shadow: 0 0 10px rgba(0,255,0,0.5); }
+        input, select { width: 100%; padding: 10px; margin: 10px 0; background: #222; border: 1px solid #444; color: white; border-radius: 8px; box-sizing: border-box; }
+        .stats-area { background: #0a0a0a; padding: 15px; border-radius: 10px; margin: 15px 0; border: 1px solid #222; }
+        .stat-row { display: flex; justify-content: space-between; align-items: center; margin: 8px 0; }
+        .btn-cre { background: #00cc00; color: black; border: none; padding: 15px; width: 100%; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.3s; }
+        .btn-cre:hover { background: #00ff00; transform: scale(1.02); }
+        .points-label { color: #fffb00; font-weight: bold; font-size: 14px; margin-bottom: 10px; display: block; }
     </style>
 </head>
 <body>
 
-    <div class="card">
-        <h2>Novo Herói ⚔️</h2>
-        
-        <input type="text" id="nomeHeroi" placeholder="Nome do Personagem">
+    <div class="container">
+        <h2>NOVO HERÓI ⚔️</h2>
+        <input type="text" id="nomeHeroi" placeholder="Nome do Personagem...">
         
         <div style="display: flex; gap: 10px;">
             <select id="classeHeroi">
                 <option value="Guerreiro">Guerreiro</option>
-                <option value="Arqueiro">Arqueiro</option>
                 <option value="Mago">Mago</option>
+                <option value="Arqueiro">Arqueiro</option>
             </select>
             <select id="sexoHeroi">
                 <option value="Masculino">Masculino</option>
@@ -41,124 +33,107 @@
             </select>
         </div>
 
-        <div class="stats-container">
-            <p style="color: #fffb00; margin-top: 0; font-weight: bold; font-size: 14px;">PONTOS DISPONÍVEIS: <span id="pontos-restantes">5</span></p>
-            
+        <div class="stats-area">
+            <span class="points-label">PONTOS DISPONÍVEIS: <span id="pontos">5</span></span>
             <div class="stat-row">
                 <span>💪 Força</span>
                 <div>
-                    <button class="btn-ponto" onclick="mudarAtributo('forca', -1)">-</button>
-                    <span id="val-forca" class="val-status">0</span>
-                    <button class="btn-ponto" onclick="mudarAtributo('forca', 1)">+</button>
+                    <button onclick="mudarStat('forca', -1)">-</button>
+                    <b id="val-forca" style="margin: 0 10px; color: #00ff00;">0</b>
+                    <button onclick="mudarStat('forca', 1)">+</button>
                 </div>
             </div>
-
-            <div class="stat-row">
-                <span>🏹 Agilidade</span>
-                <div>
-                    <button class="btn-ponto" onclick="mudarAtributo('agilidade', -1)">-</button>
-                    <span id="val-agilidade" class="val-status">0</span>
-                    <button class="btn-ponto" onclick="mudarAtributo('agilidade', 1)">+</button>
-                </div>
-            </div>
-
-            <div class="stat-row">
-                <span>🧠 Inteligência</span>
-                <div>
-                    <button class="btn-ponto" onclick="mudarAtributo('inteligencia', -1)">-</button>
-                    <span id="val-inteligencia" class="val-status">0</span>
-                    <button class="btn-ponto" onclick="mudarAtributo('inteligencia', 1)">+</button>
-                </div>
-            </div>
-
             <div class="stat-row">
                 <span>❤️ Vitalidade</span>
                 <div>
-                    <button class="btn-ponto" onclick="mudarAtributo('vitalidade', -1)">-</button>
-                    <span id="val-vitalidade" class="val-status">0</span>
-                    <button class="btn-ponto" onclick="mudarAtributo('vitalidade', 1)">+</button>
+                    <button onclick="mudarStat('vitalidade', -1)">-</button>
+                    <b id="val-vitalidade" style="margin: 0 10px; color: #00ff00;">0</b>
+                    <button onclick="mudarStat('vitalidade', 1)">+</button>
                 </div>
             </div>
-
-            <div class="stat-row">
-                <span>✨ Mana</span>
-                <div>
-                    <button class="btn-ponto" onclick="mudarAtributo('mana', -1)">-</button>
-                    <span id="val-mana" class="val-status">0</span>
-                    <button class="btn-ponto" onclick="mudarAtributo('mana', 1)">+</button>
-                </div>
             </div>
-        </div>
 
-        <button class="btn-finalizar" onclick="salvarHeroi()">ENTRAR NO MUNDO</button>
+        <button class="btn-cre" onclick="salvarHeroi()">ENTRAR NO MUNDO</button>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // CONFIGURAÇÃO
         const SUPABASE_URL = 'https://zkeshycglokyycuplczn.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_iDavmG9sQzqW6jPrOCjsmQ_5ISCiZUF';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let pontos = 5;
-        let stats = { forca: 0, agilidade: 0, inteligencia: 0, vitalidade: 0, mana: 0 };
+        let stats = { forca: 0, vitalidade: 0, agilidade: 0, inteligencia: 0, mana: 0 };
+        const email = localStorage.getItem("usuario_logado_email");
 
-        // LÓGICA DE DISTRIBUIÇÃO
-        function mudarAtributo(attr, delta) {
-            if (delta > 0 && pontos > 0) {
-                stats[attr]++;
+        // --- 1. VERIFICAÇÃO AUTOMÁTICA AO CARREGAR ---
+        async function verificarHeroiExistente() {
+            if (!email) {
+                window.location.href = "index.html";
+                return;
+            }
+
+            const { data } = await supabaseClient
+                .from('personagens')
+                .select('id_conta')
+                .eq('id_conta', email)
+                .maybeSingle();
+
+            if (data) {
+                // Se já existe, vai direto para o jogo!
+                window.location.href = "jogo.html";
+            }
+        }
+        verificarHeroiExistente();
+
+        // --- 2. LÓGICA DE DISTRIBUIÇÃO DE PONTOS ---
+        function mudarStat(stat, valor) {
+            if (valor > 0 && pontos > 0) {
+                stats[stat]++;
                 pontos--;
-            } else if (delta < 0 && stats[attr] > 0) {
-                stats[attr]--;
+            } else if (valor < 0 && stats[stat] > 0) {
+                stats[stat]--;
                 pontos++;
             }
-            
-            const el = document.getElementById(`val-${attr}`);
-            el.innerText = stats[attr];
-            
-            // Animação de Feedback
-            el.classList.remove('pop-anim');
-            void el.offsetWidth; 
-            el.classList.add('pop-anim');
-            
-            document.getElementById('pontos-restantes').innerText = pontos;
+            document.getElementById('pontos').innerText = pontos;
+            document.getElementById('val-' + stat).innerText = stats[stat];
         }
 
-        // LÓGICA DE SALVAMENTO
+        // --- 3. SALVAR E REDIRECIONAR ---
         async function salvarHeroi() {
-            const nome = document.getElementById('nomeHeroi').value.trim();
-            const email = localStorage.getItem("usuario_logado_email"); 
-
+            const nome = document.getElementById('nomeHeroi').value;
             if (!nome) return alert("Dê um nome ao seu herói!");
-            if (pontos > 0) return alert("Distribua todos os 5 pontos antes de começar!");
-            if (!email) return alert("Erro: Usuário não logado. Volte ao login.");
+            if (pontos > 0) return alert("Distribua todos os pontos!");
 
             try {
                 const { error } = await supabaseClient
                     .from('personagens')
                     .insert([{
-                        id_conta: email, 
+                        id_conta: email,
                         nome_heroi: nome,
                         classe: document.getElementById('classeHeroi').value,
                         sexo: document.getElementById('sexoHeroi').value,
                         forca: stats.forca,
-                        agilidade: stats.agilidade,
-                        inteligencia: stats.inteligencia,
                         vitalidade: stats.vitalidade,
-                        mana: stats.mana,
+                        agilidade: 0,
+                        inteligencia: 0,
+                        mana: 0,
                         nivel: 1,
                         xp: 0,
-                        ouro: 0
+                        ouro: 0,
+                        pontos_livres: 0
                     }]);
 
                 if (error) throw error;
 
                 alert("Personagem '" + nome + "' criado com sucesso!");
-                 Aqui você pode redirecionar para a página do jogo depois
-                 window.location.href = "jogo.html";
+                
+                // REDIRECIONAMENTO ATIVADO (Sem as barras //)
+                window.location.href = "jogo.html"; 
+
             } catch (e) {
-                console.error("Erro detalhado:", e);
-                alert("Erro ao criar: Nome já existe ou falha na conexão.");
+                console.error("Erro:", e);
+                alert("Erro: Este nome já existe ou houve falha na conexão.");
             }
         }
     </script>
