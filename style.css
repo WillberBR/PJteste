@@ -37,3 +37,46 @@ button {
     font-weight: bold;
     cursor: pointer;
 }
+
+                                        // novo css para caixas
+
+/* Estilo para as caixinhas de mensagens */
+.post {
+    background: #252525;
+    border-radius: 12px;
+    padding: 15px;
+    margin: 15px 0;
+    text-align: left;
+    border-left: 4px solid #00ff00;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+
+.post strong {
+    color: #00ff00;
+    font-size: 0.9em;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.post p {
+    margin: 8px 0;
+    font-size: 1.1em;
+    color: #eee;
+}
+
+.post small {
+    color: #777;
+    font-size: 0.8em;
+}
+
+/* Deixar o campo de texto mais bonito */
+textarea {
+    width: 100%;
+    border-radius: 8px;
+    background: #1a1a1a;
+    color: white;
+    padding: 10px;
+    border: 1px solid #333;
+    margin-bottom: 10px;
+    font-family: inherit;
+}
