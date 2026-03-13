@@ -28,41 +28,9 @@
         .btn-up { 
             background: #00ff00; color: black; border: none; border-radius: 4px; 
             padding: 2px 8px; cursor: pointer; font-weight: bold; transition: 0.2s;
+            display: none; /* Só aparece se houver pontos_livres */
         }
         .btn-up:hover { background: #fff; transform: scale(1.1); }
 
         /* Área de Combate */
-        .main-game { display: flex; flex-direction: column; align-items: center; padding: 20px; margin-left: 200px; }
-        .monster-card {
-            background: #1a1a1a; border: 2px solid #333; padding: 40px;
-            border-radius: 25px; text-align: center; width: 280px; margin-top: 40px;
-            cursor: pointer; transition: 0.1s; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-        .monster-card:active { transform: scale(0.92); border-color: #ff0000; }
-        .monster-hp-bar { color: #ff4444; font-size: 20px; font-weight: bold; margin: 15px 0; }
-        
-        /* Log de Mensagens */
-        #game-log {
-            width: 350px; height: 120px; background: #050505; border: 1px solid #222;
-            margin-top: 25px; padding: 12px; font-size: 13px; color: #888;
-            overflow-y: auto; border-radius: 10px; line-height: 1.6;
-        }
-    </style>
-</head>
-<body>
-
-    <div class="header-personagem">
-        <div class="stat-box">
-            <span class="stat-label">Herói</span>
-            <span id="display-nome" class="stat-val">...</span>
-        </div>
-        <div class="stat-box">
-            <span class="stat-label">Nível</span>
-            <span id="display-lvl" class="stat-val">1</span>
-        </div>
-        <div class="stat-box">
-            <span class="stat-label">Exp</span>
-            <span id="display-xp" class="stat-val">0</span>
-        </div>
-        <div class="stat-box">
-            <span class="stat-label
+        .main-game { display: flex; flex-direction: column;
