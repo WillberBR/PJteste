@@ -1,21 +1,29 @@
 function fazerLogin() {
-    const usuarioDigitado = document.getElementById('userName').value.toLowerCase().trim();
-    const senhaDigitada = document.getElementById('userPass').value.trim();
+    // Pegamos os elementos da tela
+    const campoUsuario = document.getElementById('userName');
+    const campoSenha = document.getElementById('userPass');
+    const msgErro = document.getElementById('erro');
 
-    // Isso vai mostrar um aviso na tela assim que você clicar no botão
-    alert("Você digitou o usuário: " + usuarioDigitado);
+    // Pegamos os valores e limpamos espaços extras
+    const usuarioDigitado = campoUsuario.value.trim().toLowerCase();
+    const senhaDigitada = campoSenha.value.trim();
 
+    // LISTA DE USUÁRIOS (Verifique se a senha está exatamente como você quer)
     const usuarios = {
         "adamswilber@gmail.com": "180297dk",
-        "pai": "familia01"
+        "pai": "familia01",
+        "mae": "familia02"
     };
 
+    // TESTE LÓGICO
     if (usuarios[usuarioDigitado] && usuarios[usuarioDigitado] === senhaDigitada) {
         document.getElementById('login-area').style.display = 'none';
         document.getElementById('feed-area').style.display = 'block';
-        document.getElementById('bemVindo').innerText = "Olá! Finalmente funcionou.";
+        document.getElementById('bemVindo').innerText = "Olá! Login realizado com sucesso.";
+        msgErro.innerText = ""; // Limpa erro se houver
     } else {
-        document.getElementById('erro').innerText = "O código leu: " + usuarioDigitado + " e a senha: " + senhaDigitada;
+        msgErro.innerText = "Usuário ou senha incorretos!";
+        console.log("Tentativa com:", usuarioDigitado, "| Senha:", senhaDigitada);
     }
 }
 
