@@ -5,14 +5,15 @@
     <title>Mundo Medieval - Aventura</title>
     <style>
         body { background: #000; color: white; font-family: 'Segoe UI', sans-serif; margin: 0; text-align: center; }
-        .header { background: #111; padding: 20px; border-bottom: 2px solid #00ff00; display: flex; justify-content: space-around; align-items: center; }
-        .stat-label { font-size: 12px; color: #666; display: block; text-transform: uppercase; }
-        .stat-val { color: #00ff00; font-weight: bold; font-size: 20px; }
-        .monster-area { margin-top: 50px; }
+        .header { background: #111; padding: 20px; border-bottom: 2px solid #00ff00; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .stat-group { background: #1a1a1a; padding: 10px; border-radius: 8px; border: 1px solid #333; }
+        .stat-label { font-size: 11px; color: #888; display: block; text-transform: uppercase; }
+        .stat-val { color: #00ff00; font-weight: bold; font-size: 18px; }
+        .monster-area { margin-top: 40px; }
         .monster-card { background: #1a1a1a; padding: 40px; border-radius: 25px; display: inline-block; cursor: pointer; border: 2px solid #333; transition: 0.1s; }
         .monster-card:active { transform: scale(0.95); border-color: #ff0000; }
-        #game-log { margin: 30px auto; width: 80%; max-width: 500px; background: #050505; border: 1px solid #222; padding: 15px; font-size: 14px; color: #888; height: 120px; overflow-y: auto; border-radius: 10px; text-align: left; }
-        .btn-voltar { position: absolute; top: 80px; left: 20px; background: #222; color: #fff; border: 1px solid #444; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 12px; }
+        #game-log { margin: 20px auto; width: 90%; max-width: 600px; background: #050505; border: 1px solid #222; padding: 15px; font-size: 14px; color: #888; height: 150px; overflow-y: auto; border-radius: 10px; text-align: left; }
+        .btn-voltar { position: fixed; top: 10px; left: 10px; background: #222; color: #fff; border: 1px solid #444; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 12px; z-index: 100; }
     </style>
 </head>
 <body>
@@ -20,20 +21,41 @@
     <button class="btn-voltar" onclick="window.location.href='selecao.html'">⬅ Trocar Herói</button>
 
     <div class="header">
-        <div><span class="stat-label">Herói</span><span id="display-nome" class="stat-val">...</span></div>
-        <div><span class="stat-label">Nível</span><span id="display-lvl" class="stat-val">1</span></div>
-        <div><span class="stat-label">Experiência</span><span id="display-xp" class="stat-val">0</span></div>
+        <div class="stat-group">
+            <span class="stat-label">Herói</span>
+            <span id="display-nome" class="stat-val">...</span>
+        </div>
+        <div class="stat-group">
+            <span class="stat-label">Nível</span>
+            <span id="display-lvl" class="stat-val">1</span>
+        </div>
+        <div class="stat-group">
+            <span class="stat-label">XP</span>
+            <span id="display-xp" class="stat-val">0</span>
+        </div>
+        <div class="stat-group">
+            <span class="stat-label">Força</span>
+            <span id="display-for" class="stat-val">0</span>
+        </div>
+        <div class="stat-group">
+            <span class="stat-label">Agilidade</span>
+            <span id="display-agi" class="stat-val">0</span>
+        </div>
+        <div class="stat-group">
+            <span class="stat-label">Inteligência</span>
+            <span id="display-int" class="stat-val">0</span>
+        </div>
     </div>
 
     <div class="monster-area">
         <div class="monster-card" onclick="atacar()">
-            <h2>👾 SLIME DE ESGOTO</h2>
+            <h2 id="monster-name">👾 SLIME DE ESGOTO</h2>
             <div style="color: #ff4444; font-size: 24px; font-weight: bold;">HP: <span id="monster-hp">10</span></div>
             <small style="color: #444;">CLIQUE PARA ATACAR</small>
         </div>
     </div>
 
-    <div id="game-log">>> Conectando ao personagem selecionado...</div>
+    <div id="game-log">>> Carregando atributos...</div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="combate.js"></script>
@@ -46,54 +68,54 @@
         let monsterHP = 10;
 
         async function iniciar() {
-            // Pega o ID que foi salvo lá na tela de seleção
             const heroiId = localStorage.getItem("heroi_selecionado_id");
-            const log = document.getElementById('game-log');
+            if (!heroiId) return window.location.href = "selecao.html";
 
-            if (!heroiId) {
-                alert("Nenhum herói selecionado!");
-                window.location.href = "selecao.html";
-                return;
+            const { data, error } = await supabaseClient
+                .from('personagens')
+                .select('*')
+                .eq('id', heroiId)
+                .single();
+
+            if (data) {
+                heroi = data;
+                atualizarInterface();
+                document.getElementById('game-log').innerText = `>> Bem-vindo, ${heroi.nome_heroi}!`;
             }
+        }
 
-            try {
-                // BUSCA REFORMULADA: Agora busca diretamente pelo ID ÚNICO
-                const { data, error } = await supabaseClient
-                    .from('personagens')
-                    .select('*')
-                    .eq('id', heroiId)
-                    .single(); // Como o ID é único, o .single() funcionará perfeitamente aqui
-
-                if (error) throw error;
-
-                if (data) {
-                    heroi = data;
-                    document.getElementById('display-nome').innerText = heroi.nome_heroi;
-                    document.getElementById('display-lvl').innerText = heroi.nivel;
-                    document.getElementById('display-xp').innerText = heroi.xp;
-                    log.innerText = ">> Herói " + heroi.nome_heroi + " carregado! Pronto para lutar.";
-                }
-            } catch (err) {
-                console.error("Erro ao carregar:", err);
-                log.innerHTML = `<span style="color:red">>> Erro ao carregar herói: ${err.message}</span>`;
-            }
+        function atualizarInterface() {
+            document.getElementById('display-nome').innerText = heroi.nome_heroi;
+            document.getElementById('display-lvl').innerText = heroi.nivel;
+            document.getElementById('display-xp').innerText = heroi.xp;
+            document.getElementById('display-for').innerText = heroi.forca;
+            document.getElementById('display-agi').innerText = heroi.agilidade || 0;
+            document.getElementById('display-int').innerText = heroi.inteligencia || 0;
         }
 
         function atacar() {
             if (!heroi) return;
+            
+            // calcularDano agora usa a AGILIDADE para críticos (está no combate.js)
             const dano = calcularDano(heroi);
             monsterHP -= dano;
-            escreverLog(`Você causou ${dano} de dano!`);
+            
+            if (dano > (heroi.forca * 2)) {
+                escreverLog(`🔥 CRÍTICO! Você causou ${dano} de dano!`);
+            } else {
+                escreverLog(`Você causou ${dano} de dano.`);
+            }
 
             if (monsterHP <= 0) {
                 heroi.xp += 5;
                 escreverLog(`⚔️ Inimigo derrotado! +5 XP`);
+                
                 if (verificarLevelUp(heroi)) {
-                    escreverLog(`🌟 LEVEL UP! Nível ${heroi.nivel}!`);
-                    document.getElementById('display-lvl').innerText = heroi.nivel;
+                    escreverLog(`🌟 LEVEL UP! Você subiu para o nível ${heroi.nivel}!`);
                 }
+                
                 monsterHP = 10 + (heroi.nivel * 5);
-                document.getElementById('display-xp').innerText = heroi.xp;
+                atualizarInterface();
                 salvarProgresso();
             }
             document.getElementById('monster-hp').innerText = monsterHP;
@@ -102,7 +124,7 @@
         async function salvarProgresso() {
             await supabaseClient
                 .from('personagens')
-                .update({ xp: heroi.xp, nivel: heroi.nivel, pontos_livres: heroi.pontos_livres })
+                .update({ xp: heroi.xp, nivel: heroi.nivel })
                 .eq('id', heroi.id);
         }
 
