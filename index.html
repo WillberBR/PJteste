@@ -3,25 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mural Família Cloud</title>
+    <title>Mural Família - Premium</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
 
     <style>
         body { background-color: #121212; color: white; font-family: sans-serif; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
         .container { width: 100%; max-width: 450px; }
-        
-        /* Título único no topo */
-        .main-title { border: 2px solid #00ff00; padding: 15px; border-radius: 10px; color: #00ff00; text-align: center; margin-bottom: 20px; text-transform: uppercase; }
-
-        .box { background: #1e1e1e; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); text-align: center; }
-        
-        input { padding: 12px; border-radius: 5px; border: 1px solid #333; margin-bottom: 10px; background: #121212; color: white; width: 85%; outline: none; }
-        input:focus { border-color: #00ff00; }
-        
+        .main-title { border: 2px solid #00ff00; padding: 15px; border-radius: 10px; color: #00ff00; text-align: center; margin-bottom: 20px; }
+        .box { background: #1e1e1e; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); text-align: center; margin-bottom: 15px; }
+        input { padding: 12px; border-radius: 5px; border: 1px solid #333; margin-bottom: 10px; background: #121212; color: white; width: 85%; }
         .btn { background-color: #00ff00; color: #121212; padding: 12px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; width: 95%; margin-top: 5px; }
-        
+        .btn-alt { background: transparent; color: #00ff00; border: 1px solid #00ff00; margin-top: 15px; font-size: 0.8em; width: auto; padding: 5px 15px; }
         .recado-card { background: #252525; padding: 15px; border-radius: 8px; margin-top: 15px; border-left: 5px solid #00ff00; position: relative; }
         .excluir-btn { position: absolute; top: 10px; right: 10px; color: #ff4444; cursor: pointer; }
         .hora { font-size: 0.7em; color: #888; display: block; margin-top: 5px; }
@@ -32,11 +27,13 @@
     <div class="container">
         <h1 class="main-title">Mural da Família</h1>
 
-        <div id="areaLogin" class="box">
-            <h3>Login</h3>
-            <input type="text" id="campoUsuario" placeholder="Usuário">
-            <input type="password" id="campoSenha" placeholder="Senha">
-            <button class="btn" onclick="fazerLogin()">ENTRAR</button>
+        <div id="areaAuth" class="box">
+            <h3 id="authTitulo">Entrar</h3>
+            <input type="email" id="email" placeholder="E-mail">
+            <input type="password" id="senha" placeholder="Senha">
+            <button class="btn" id="btnAcao" onclick="autenticar()">ENTRAR</button>
+            <br>
+            <button class="btn-alt" id="btnTrocar" onclick="alternarAuth()">Não tem conta? Cadastre-se</button>
         </div>
 
         <div id="areaPrivada" style="display: none;">
@@ -45,9 +42,7 @@
                 <input type="text" id="novoRecado" placeholder="Digite sua mensagem...">
                 <button class="btn" onclick="postarRecado()">POSTAR NA NUVEM</button>
             </div>
-            
             <div id="listaRecados"></div>
-            
             <div style="text-align: center;">
                 <button class="btn" onclick="logout()" style="background:#333; color:white; width:50%; margin-top:30px;">SAIR</button>
             </div>
@@ -66,26 +61,43 @@
         };
 
         firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
         const database = firebase.database();
 
-        function fazerLogin() {
-            const user = document.getElementById('campoUsuario').value;
-            const pass = document.getElementById('campoSenha').value;
-            if(user.toLowerCase() === "admin" && pass === "1234") {
-                localStorage.setItem('usuarioLogado', user);
-                mostrarAreaPrivada(user);
+        let modoCadastro = false;
+
+        function alternarAuth() {
+            modoCadastro = !modoCadastro;
+            document.getElementById('authTitulo').innerText = modoCadastro ? "Criar Conta" : "Entrar";
+            document.getElementById('btnAcao').innerText = modoCadastro ? "CADASTRAR" : "ENTRAR";
+            document.getElementById('btnTrocar').innerText = modoCadastro ? "Já tem conta? Entre aqui" : "Não tem conta? Cadastre-se";
+        }
+
+        function autenticar() {
+            const email = document.getElementById('email').value;
+            const senha = document.getElementById('senha').value;
+
+            if (modoCadastro) {
+                auth.createUserWithEmailAndPassword(email, senha)
+                    .catch(erro => alert("Erro ao cadastrar: " + erro.message));
             } else {
-                alert("Usuário ou senha incorretos!");
+                auth.signInWithEmailAndPassword(email, senha)
+                    .catch(erro => alert("Erro ao entrar: " + erro.message));
             }
         }
 
-        function mostrarAreaPrivada(nome) {
-            // ESCONDE O LOGIN E MOSTRA O MURAL
-            document.getElementById('areaLogin').style.display = 'none';
-            document.getElementById('areaPrivada').style.display = 'block';
-            document.getElementById('boasVindas').innerText = "Olá, " + nome + "!";
-            ouvirRecados();
-        }
+        // Observador: Detecta se o usuário logou ou saiu
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                document.getElementById('areaAuth').style.display = 'none';
+                document.getElementById('areaPrivada').style.display = 'block';
+                document.getElementById('boasVindas').innerText = "Olá, " + user.email.split('@')[0] + "!";
+                ouvirRecados();
+            } else {
+                document.getElementById('areaAuth').style.display = 'block';
+                document.getElementById('areaPrivada').style.display = 'none';
+            }
+        });
 
         function postarRecado() {
             const input = document.getElementById('novoRecado');
@@ -93,7 +105,8 @@
 
             database.ref('mural').push({
                 texto: input.value,
-                autor: localStorage.getItem('usuarioLogado'),
+                autor: auth.currentUser.email.split('@')[0],
+                uid: auth.currentUser.uid,
                 data: new Date().toLocaleString('pt-BR')
             });
             input.value = "";
@@ -107,9 +120,13 @@
                 if (dados) {
                     Object.keys(dados).reverse().forEach(key => {
                         const item = dados[key];
+                        // Só mostra botão de excluir se o recado for seu
+                        const bExcluir = item.uid === auth.currentUser.uid ? 
+                            `<span class="excluir-btn" onclick="excluirRecado('${key}')">X</span>` : "";
+                        
                         lista.innerHTML += `
                             <div class="recado-card">
-                                <span class="excluir-btn" onclick="excluirRecado('${key}')">X</span>
+                                ${bExcluir}
                                 <strong>${item.autor}:</strong> ${item.texto}
                                 <span class="hora">${item.data}</span>
                             </div>
@@ -120,20 +137,11 @@
         }
 
         function excluirRecado(id) {
-            if(confirm("Deseja apagar este recado?")) {
-                database.ref('mural/' + id).remove();
-            }
+            database.ref('mural/' + id).remove();
         }
 
         function logout() {
-            localStorage.removeItem('usuarioLogado');
-            location.reload();
-        }
-
-        // Verifica se já estava logado ao abrir
-        const logado = localStorage.getItem('usuarioLogado');
-        if(logado) {
-            mostrarAreaPrivada(logado);
+            auth.signOut();
         }
     </script>
 </body>
