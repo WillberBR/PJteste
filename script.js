@@ -1,9 +1,10 @@
-// CONFIGURAÇÃO DO COFRE (SUPABASE)
+// CONFIGURAÇÃO DO SUPABASE
 const SUPABASE_URL = 'https://zkeshycglokyycuplczn.supabase.co';
-const SUPABASE_KEY = 'SUA_CHAVE_AQUI'; // <-- Coloque sua chave sb_publishable aqui
+const SUPABASE_KEY = 'sb_publishable_iDavmG9sQzqW6jPrOCjsmQ_5ISCiZUF'; // <-- Cole sua chave aqui entre as aspas
 
 let nomeUsuarioLogado = ""; // Variável para guardar o nome de quem logou
 
+// --- FUNÇÃO DE LOGIN ---
 async function fazerLogin() {
     const emailDigitado = document.getElementById('userName').value.trim().toLowerCase();
     const senhaDigitada = document.getElementById('userPass').value.trim();
@@ -25,15 +26,16 @@ async function fazerLogin() {
         if (dados.length > 0) {
             const usuario = dados[0];
             
-            // --- AQUI ESTÁ O PULO DO GATO ---
-            nomeUsuarioLogado = usuario.nome_exibicao; // Guarda o nome do banco
+            // Salva o nome de quem logou para usar no mural
+            nomeUsuarioLogado = usuario.nome_exibicao; 
             
+            // Troca as telas
             document.getElementById('login-area').style.display = 'none';
             document.getElementById('feed-area').style.display = 'block';
             document.getElementById('bemVindo').innerText = "Olá, " + nomeUsuarioLogado + "!";
             
-            carregarMensagens(); // Busca os recados assim que logar
-            // -------------------------------
+            // Busca as mensagens no mural
+            carregarMensagens();
             
             msgErro.innerText = "";
         } else {
@@ -41,60 +43,80 @@ async function fazerLogin() {
             msgErro.innerText = "Usuário ou senha incorretos!";
         }
     } catch (erro) {
-        msgErro.innerText = "Erro ao conectar.";
+        msgErro.innerText = "Erro ao conectar com o banco de dados.";
+        console.error(erro);
     }
 }
 
-// FUNÇÃO PARA BUSCAR MENSAGENS NO BANCO
+// --- FUNÇÃO PARA BUSCAR RECADOS NO MURAL ---
 async function carregarMensagens() {
     const mural = document.getElementById('mural-mensagens');
     if (!mural) return;
 
     try {
-        const resposta = await fetch(`${SUPABASE_URL}/rest/v1/mensagens?select=*&order=created_at.desc`, {
-            headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+        // Buscando da tabela Mural_Familia que você criou
+        const resposta = await fetch(`${SUPABASE_URL}/rest/v1/Mural_Familia?select=*&order=created_at.desc`, {
+            headers: { 
+                'apikey': SUPABASE_KEY, 
+                'Authorization': `Bearer ${SUPABASE_KEY}` 
+            }
         });
         
         const mensagens = await resposta.json();
-        mural.innerHTML = ""; 
+        mural.innerHTML = ""; // Limpa o "Carregando..."
+
+        if (mensagens.length === 0) {
+            mural.innerHTML = "<p style='color: #888;'>Nenhum recado ainda. Seja o primeiro!</p>";
+            return;
+        }
 
         mensagens.forEach(msg => {
             mural.innerHTML += `
-                <div class="post" style="background: #333; padding: 10px; margin-bottom: 10px; border-radius: 8px; border-left: 4px solid #00ff00;">
-                    <strong style="color: #00ff00;">${msg.autor}:</strong>
-                    <p style="margin: 5px 0;">${msg.conteudo}</p>
-                    <small style="color: #888;">${new Date(msg.created_at).toLocaleString('pt-BR')}</small>
+                <div class="post">
+                    <strong>${msg.autor}:</strong>
+                    <p>${msg.conteudo}</p>
+                    <small>${new Date(msg.created_at).toLocaleString('pt-BR')}</small>
                 </div>
             `;
         });
     } catch (e) {
-        console.log("Erro ao carregar mensagens");
+        mural.innerHTML = "<p style='color: red;'>Erro ao carregar o mural.</p>";
     }
 }
 
-// FUNÇÃO PARA ENVIAR NOVA MENSAGEM
+// --- FUNÇÃO PARA POSTAR NO MURAL ---
 async function postarMensagem() {
-    const texto = document.getElementById('textoMensagem').value;
-    if (!texto) return alert("Escreva algo primeiro!");
+    const campoTexto = document.getElementById('textoMensagem');
+    const texto = campoTexto.value.trim();
 
-    await fetch(`${SUPABASE_URL}/rest/v1/mensagens`, {
-        method: 'POST',
-        headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`,
-            'Content-Type': 'application/json',
-            'Prefer': 'return=representation'
-        },
-        body: JSON.stringify({
-            autor: nomeUsuarioLogado, // Usa o nome de quem fez login
-            conteudo: texto
-        })
-    });
+    if (!texto) {
+        alert("Escreva alguma coisa antes de postar!");
+        return;
+    }
 
-    document.getElementById('textoMensagem').value = ""; 
-    carregarMensagens(); 
+    try {
+        await fetch(`${SUPABASE_URL}/rest/v1/Mural_Familia`, {
+            method: 'POST',
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Content-Type': 'application/json',
+                'Prefer': 'return=representation'
+            },
+            body: JSON.stringify({
+                autor: nomeUsuarioLogado, // Nome de quem logou
+                conteudo: texto           // Texto digitado
+            })
+        });
+
+        campoTexto.value = ""; // Limpa o campo depois de postar
+        carregarMensagens();    // Atualiza o mural para mostrar a nova mensagem
+    } catch (error) {
+        alert("Erro ao postar mensagem.");
+    }
 }
 
+// --- FUNÇÃO DE SAIR ---
 function logout() {
     location.reload();
 }
