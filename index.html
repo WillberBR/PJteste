@@ -24,6 +24,17 @@
                 <div class="perfil-info">
                     <h3 id="perfil-nome">Carregando...</h3>
                     <p id="perfil-bio">"Frase do perfil"</p>
+                    <button onclick="toggleEdicao()" style="background: none; border: 1px solid #555; color: #888; padding: 5px 10px; border-radius: 5px; cursor: pointer; margin-bottom: 15px;">⚙️ Editar Perfil</button>
+
+<div id="area-edicao" style="display: none; background: #1a1a1a; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #333;">
+    <h4 style="margin-top: 0;">Editar meu perfil</h4>
+    <input type="text" id="edit-bio" placeholder="Nova bio/frase...">
+    <input type="text" id="edit-foto" placeholder="Link da foto (URL)...">
+    <div style="display: flex; gap: 10px; margin-top: 10px;">
+        <button onclick="salvarPerfil()" style="background: #00ff00; color: black; flex: 1;">Salvar</button>
+        <button onclick="toggleEdicao()" style="background: #444; flex: 1;">Cancelar</button>
+    </div>
+</div>
                 </div>
             </div>
 
