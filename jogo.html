@@ -71,4 +71,47 @@
                     document.getElementById('display-nome').innerText = heroi.nome_heroi;
                     document.getElementById('display-lvl').innerText = heroi.nivel;
                     document.getElementById('display-xp').innerText = heroi.xp;
-                    log.innerText = ">> Herói " + heroi.nome_heroi + " carreg
+                    log.innerText = ">> Herói " + heroi.nome_heroi + " carregado! Pronto para lutar.";
+                }
+            } catch (err) {
+                console.error("Erro ao carregar:", err);
+                log.innerHTML = `<span style="color:red">>> Erro ao carregar herói: ${err.message}</span>`;
+            }
+        }
+
+        function atacar() {
+            if (!heroi) return;
+            const dano = calcularDano(heroi);
+            monsterHP -= dano;
+            escreverLog(`Você causou ${dano} de dano!`);
+
+            if (monsterHP <= 0) {
+                heroi.xp += 5;
+                escreverLog(`⚔️ Inimigo derrotado! +5 XP`);
+                if (verificarLevelUp(heroi)) {
+                    escreverLog(`🌟 LEVEL UP! Nível ${heroi.nivel}!`);
+                    document.getElementById('display-lvl').innerText = heroi.nivel;
+                }
+                monsterHP = 10 + (heroi.nivel * 5);
+                document.getElementById('display-xp').innerText = heroi.xp;
+                salvarProgresso();
+            }
+            document.getElementById('monster-hp').innerText = monsterHP;
+        }
+
+        async function salvarProgresso() {
+            await supabaseClient
+                .from('personagens')
+                .update({ xp: heroi.xp, nivel: heroi.nivel, pontos_livres: heroi.pontos_livres })
+                .eq('id', heroi.id);
+        }
+
+        function escreverLog(msg) {
+            const logBox = document.getElementById('game-log');
+            logBox.innerHTML = `> ${msg}<br>` + logBox.innerHTML;
+        }
+
+        iniciar();
+    </script>
+</body>
+</html>
