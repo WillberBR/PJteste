@@ -309,12 +309,11 @@ async function carregarMensagens() {
     }
 }
 
-// --- FUNÇÃO PARA CURTIR COM TRAVA DE REPETIÇÃO ---
 async function curtirPost(id, curtidasAtuais) {
-    // 1. Verifica se já curtiu este post específico nesta sessão
+    // 1. A TRAVA: Verifica se já existe um registro de curtida para este ID no seu PC
     if (localStorage.getItem(`curtido_${id}`)) {
         alert("Você já curtiu este recado! ❤️");
-        return;
+        return; // Para o código aqui e não envia nada para o banco
     }
 
     try {
@@ -329,14 +328,14 @@ async function curtirPost(id, curtidasAtuais) {
         });
 
         if (resposta.ok) {
-            // 2. Salva a "trava" no navegador
+            // 2. O CARIMBO: Salva no navegador que este post específico foi curtido
             localStorage.setItem(`curtido_${id}`, "true");
-            // 3. Atualiza a lista na tela
             carregarMensagens();
         }
     } catch (e) {
         console.error("Erro ao curtir:", e);
     }
+}
 }
 
 // FUNÇÃO PARA EXCLUIR (DELETE)
