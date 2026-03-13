@@ -53,7 +53,9 @@ async function fazerLogin() {
         } else {
             if (msgErro) msgErro.innerText = "Usuário ou senha incorretos!";
         }
-    } catch (erro) { console.error(erro); }
+    } catch (erro) {
+        console.error("Erro no login:", erro);
+    }
 }
 
 // --- 2. CARREGAR MENSAGENS (COM FIXADOS E SELOS) ---
@@ -62,7 +64,6 @@ async function carregarMensagens() {
     if (!mural) return;
 
     try {
-        // Busca mensagens: fixadas primeiro, depois as mais recentes
         const resposta = await fetch(`${SUPABASE_URL}/rest/v1/Mural_Familia?select=*&order=fixado.desc,created_at.desc`, {
             headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
         });
@@ -73,13 +74,11 @@ async function carregarMensagens() {
             const podeExcluir = (msg.autor === nomeUsuarioLogado || isAdmin);
             const botaoExcluir = podeExcluir ? `<button onclick="excluirPost(${msg.id})" style="background:none; border:none; color:#ff4444; cursor:pointer; float:right;">🗑️</button>` : "";
             
-            // Botão de Fixar (Apenas para Admin)
             const botaoFixar = isAdmin 
                 ? `<button onclick="toggleFixar(${msg.id}, ${msg.fixado})" style="background:none; border:none; color:${msg.fixado ? '#FFD700' : '#666'}; cursor:pointer; float:right; margin-right:10px;">📌</button>` 
                 : "";
 
-            // Selo e Brilho para o Admin
-            const ehAdmin = (msg.autor === "Willber" || msg.autor === nomeUsuarioLogado && isAdmin);
+            const ehAdmin = (msg.autor === "Willber" || (msg.autor === nomeUsuarioLogado && isAdmin));
             const estiloNome = ehAdmin ? 'color:#00ff00; text-shadow: 0 0 8px #00ff00;' : 'color:#00ff00;';
             const selo = ehAdmin ? `<span style="color: #FFD700; margin-left: 5px; font-size: 12px;">★ VERIFICADO</span>` : "";
 
@@ -101,37 +100,33 @@ async function carregarMensagens() {
                     </div>
                 </div>`;
         });
-    } catch (e) { console.error(e); }
+    } catch (e) {
+        console.error("Erro ao carregar mensagens:", e);
+    }
 }
 
-// --- 3. FUNÇÃO PARA FIXAR (MODO DEUS) ---
+// --- 3. FUNÇÃO PARA FIXAR ---
 async function toggleFixar(id, estadoAtual) {
     try {
         await fetch(`${SUPABASE_URL}/rest/v1/Mural_Familia?id=eq.${id}`, {
             method: 'PATCH',
-            headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify({ fixado: !estadoAtual })
         });
         carregarMensagens();
-    } catch (e) { console.error(e); }
+    } catch (e) {
+        console.error("Erro ao fixar:", e);
+    }
 }
 
-// --- 4. FUNÇÕES DE POSTAR, CURTIR E EXCLUIR ---
+// --- 4. FUNÇÃO PARA POSTAR ---
 async function postarMensagem() {
     const campo = document.getElementById('textoMensagem');
-    if (!campo.value.trim()) return;
+    if (!campo || !campo.value.trim()) return;
+
     try {
         await fetch(`${SUPABASE_URL}/rest/v1/Mural_Familia`, {
-            method: 'POST',
-            headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ autor: nomeUsuarioLogado, conteudo: campo.value.trim(), fixado: false })
-        });
-        campo.value = ""; 
-        carregarMensagens();    
-    } catch (e) { console.error(e); }
-}
-
-async function curtirPost(id, curtidasAtuais) {
-    if (localStorage.getItem(`curtido_${id}`)) return alert("Já curtiu! ❤️");
-    try {
-        await fetch(`${SUPABASE_URL}/
