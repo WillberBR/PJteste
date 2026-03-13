@@ -19,4 +19,128 @@
         .btn:hover { background-color: #00cc00; transform: scale(1.02); }
         
         /* Cards de Recado */
-        .recado-card { background: #1e1e1e; padding: 15px; border-radius: 8
+        .recado-card { background: #1e1e1e; padding: 15px; border-radius: 8px; margin-bottom: 12px; border-left: 5px solid #00ff00; text-align: left; position: relative; animation: slideIn 0.3s ease; }
+        .excluir-btn { position: absolute; top: 10px; right: 10px; color: #ff4444; cursor: pointer; font-size: 1.2em; font-weight: bold; padding: 0 5px; }
+        .hora-recado { font-size: 0.75em; color: #888; display: block; margin-top: 8px; }
+
+        /* Telas */
+        .box { background: #181818; padding: 25px; border-radius: 15px; margin-top: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Mural Digital</h1>
+
+        <div id="areaLogin" class="box">
+            <h3>Acesso Restrito</h3>
+            <input type="text" id="campoUsuario" placeholder="Usuário">
+            <input type="password" id="campoSenha" placeholder="Senha">
+            <button class="btn" onclick="fazerLogin()" style="width: 95%;">ENTRAR</button>
+            <p id="mensagemErro" style="color: #ff4444; margin-top: 10px; font-size: 0.9em;"></p>
+        </div>
+
+        <div id="areaPrivada" style="display: none;">
+            <div class="box">
+                <h3 id="boasVindas">Olá!</h3>
+                <input type="text" id="novoRecado" placeholder="O que quer dizer para a família?">
+                <button class="btn" onclick="postarRecado()" style="width: 95%;">POSTAR RECADO</button>
+            </div>
+            
+            <h4 style="text-align: left; margin-top: 30px; color: #888;">Recados Recentes:</h4>
+            <div id="listaRecados">
+                </div>
+
+            <button class="btn" onclick="logout()" style="background: #333; color: #eee; margin-top: 40px; font-size: 0.8em;">SAIR DO SISTEMA</button>
+        </div>
+    </div>
+
+    <script>
+        // Carregamento inicial
+        window.addEventListener('load', () => {
+            const usuarioSalvo = localStorage.getItem('usuarioLogado');
+            if (usuarioSalvo) {
+                mostrarAreaPrivada(usuarioSalvo);
+            }
+        });
+
+        function fazerLogin() {
+            const user = document.getElementById('campoUsuario').value;
+            const pass = document.getElementById('campoSenha').value;
+            // Login simples para teste
+            if (user.toLowerCase() === "admin" && pass === "1234") {
+                localStorage.setItem('usuarioLogado', user);
+                mostrarAreaPrivada(user);
+            } else {
+                document.getElementById('mensagemErro').innerText = "Usuário ou senha incorretos!";
+            }
+        }
+
+        function mostrarAreaPrivada(nome) {
+            document.getElementById('areaLogin').style.display = 'none';
+            document.getElementById('areaPrivada').style.display = 'block';
+            document.getElementById('boasVindas').innerText = "Olá, " + nome + "!";
+            exibirRecados();
+        }
+
+        function postarRecado() {
+            const input = document.getElementById('novoRecado');
+            if (input.value.trim() === "") return;
+
+            const novoRecado = {
+                id: Date.now(),
+                texto: input.value,
+                autor: localStorage.getItem('usuarioLogado'),
+                data: new Date().toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' })
+            };
+
+            let mural = JSON.parse(localStorage.getItem('mural')) || [];
+            
+            // Verificação de segurança: se o mural antigo for só texto, limpamos para não dar erro
+            if (mural.length > 0 && typeof mural[0] === 'string') { mural = []; }
+
+            mural.push(novoRecado);
+            localStorage.setItem('mural', JSON.stringify(mural));
+            
+            input.value = "";
+            exibirRecados();
+        }
+
+        function exibirRecados() {
+            const divMural = document.getElementById('listaRecados');
+            const dados = JSON.parse(localStorage.getItem('mural')) || [];
+            
+            if (dados.length === 0) {
+                divMural.innerHTML = "<p style='color:#555'>Nenhum recado ainda...</p>";
+                return;
+            }
+
+            // Renderiza do mais novo para o mais velho
+            divMural.innerHTML = dados.slice().reverse().map(item => `
+                <div class="recado-card">
+                    <span class="excluir-btn" onclick="excluirRecado(${item.id})">&times;</span>
+                    <strong>${item.autor}:</strong> ${item.texto}
+                    <span class="hora-recado">📅 ${item.data}</span>
+                </div>
+            `).join('');
+        }
+
+        function excluirRecado(id) {
+            let mural = JSON.parse(localStorage.getItem('mural')) || [];
+            mural = mural.filter(item => item.id !== id);
+            localStorage.setItem('mural', JSON.stringify(mural));
+            exibirRecados();
+        }
+
+        function logout() {
+            localStorage.removeItem('usuarioLogado');
+            location.reload();
+        }
+    </script>
+</body>
+</html>
