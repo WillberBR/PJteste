@@ -271,3 +271,68 @@ async function salvarPerfil() {
         alert("Erro ao salvar perfil.");
     }
 }
+
+
+
+// Substitua sua função carregarMensagens por esta:
+async function carregarMensagens() {
+    const mural = document.getElementById('mural-mensagens');
+    try {
+        const resposta = await fetch(`${SUPABASE_URL}/rest/v1/Mural_Familia?select=*&order=created_at.desc`, {
+            headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+        });
+        const mensagens = await resposta.json();
+        mural.innerHTML = "";
+
+        mensagens.forEach(msg => {
+            // Só mostra a lixeira se VOCÊ for o autor
+            const botaoExcluir = msg.autor === nomeUsuarioLogado 
+                ? `<button onclick="excluirPost(${msg.id})" style="background:none; border:none; color:#ff4444; cursor:pointer; float:right; font-size:18px;">🗑️</button>` 
+                : "";
+
+            mural.innerHTML += `
+                <div class="post" style="background:#1a1a1a; padding:15px; border-radius:10px; margin-bottom:15px; border:1px solid #333;">
+                    ${botaoExcluir}
+                    <strong style="color:#00ff00;">${msg.autor}:</strong>
+                    <p style="margin:10px 0; color:#eee;">${msg.conteudo}</p>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <button onclick="curtirPost(${msg.id}, ${msg.curtidas || 0})" style="background:#333; border:none; border-radius:20px; color:white; padding: 5px 12px; cursor:pointer; display:flex; align-items:center; gap:5px;">
+                            ❤️ <span>${msg.curtidas || 0}</span>
+                        </button>
+                        <small style="color: #666;">${new Date(msg.created_at).toLocaleString('pt-BR')}</small>
+                    </div>
+                </div>
+            `;
+        });
+    } catch (e) {
+        console.error("Erro ao carregar:", e);
+    }
+}
+
+// FUNÇÃO PARA CURTIR (PATCH)
+async function curtirPost(id, curtidasAtuais) {
+    await fetch(`${SUPABASE_URL}/rest/v1/Mural_Familia?id=eq.${id}`, {
+        method: 'PATCH',
+        headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ curtidas: curtidasAtuais + 1 })
+    });
+    carregarMensagens();
+}
+
+// FUNÇÃO PARA EXCLUIR (DELETE)
+async function excluirPost(id) {
+    if (!confirm("Tem certeza que quer apagar este recado?")) return;
+
+    await fetch(`${SUPABASE_URL}/rest/v1/Mural_Familia?id=eq.${id}`, {
+        method: 'DELETE',
+        headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`
+        }
+    });
+    carregarMensagens();
+}
