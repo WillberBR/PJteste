@@ -19,21 +19,37 @@ async function fazerLogin() {
             document.getElementById('perfil-nome').innerText = nomeUsuarioLogado;
             document.getElementById('login-area').style.display = 'none';
             document.getElementById('feed-area').style.display = 'block';
-            
-            // Adiciona a barra de emojis dinamicamente
             mostrarBarraEmojis();
             carregarMensagens();
         } else { alert("E-mail ou senha incorretos!"); }
     } catch (e) { console.error(e); }
 }
 
-// FUNÇÃO PARA A BARRA DE EMOJIS
+// FUNÇÃO PARA CALCULAR O TEMPO (Postado há...)
+function formatarTempo(dataISO) {
+    const agora = new Date();
+    const postagem = new Date(dataISO);
+    const diferencaEmSegundos = Math.floor((agora - postagem) / 1000);
+
+    if (diferencaEmSegundos < 60) return "agora há pouco";
+    
+    const minutos = Math.floor(diferencaEmSegundos / 60);
+    if (minutos < 60) return `há ${minutos} ${minutos === 1 ? 'minuto' : 'minutos'}`;
+    
+    const horas = Math.floor(minutos / 60);
+    if (horas < 24) return `há ${horas} ${horas === 1 ? 'hora' : 'horas'}`;
+    
+    const dias = Math.floor(horas / 24);
+    return `há ${dias} ${dias === 1 ? 'dia' : 'dias'}`;
+}
+
 function mostrarBarraEmojis() {
     const areaInput = document.querySelector('.mural-input');
-    if (!areaInput) return;
+    if (!areaInput || document.getElementById('emoji-bar')) return;
 
     const emojis = ["❤️", "😂", "🙏", "🙌", "🔥", "🚀", "😍", "👏", "☀️", "☕"];
     const divEmojis = document.createElement('div');
+    divEmojis.id = 'emoji-bar';
     divEmojis.style.cssText = "display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;";
     
     emojis.forEach(emoji => {
@@ -47,7 +63,6 @@ function mostrarBarraEmojis() {
         };
         divEmojis.appendChild(btn);
     });
-    
     areaInput.prepend(divEmojis);
 }
 
@@ -72,35 +87,21 @@ async function carregarMensagens() {
             const corNome = ehWillber ? "#ff0000" : "#00d9ff";
             const podeApagar = (nomeUsuarioLogado.toLowerCase() === "willber" || nomeUsuarioLogado === msg.autor);
             const jaCurtiu = localStorage.getItem(`curtiu_${msg.id}`);
+            
+            // Calcula o tempo relativo
+            const tempoPassado = formatarTempo(msg.created_at);
 
             mural.innerHTML += `
                 <div style="border: 1px solid ${ehWillber ? '#ff0000' : '#333'}; background: #111; padding: 15px; border-radius: 12px; margin-bottom: 15px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <strong style="color: ${corNome}; text-shadow: 0 0 10px ${corNome}; text-transform: uppercase;">
-                            ${msg.autor} ${ehWillber ? '👑' : ''}
-                        </strong>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div>
+                            <strong style="color: ${corNome}; text-shadow: 0 0 10px ${corNome}; text-transform: uppercase;">
+                                ${msg.autor} ${ehWillber ? '👑' : ''}
+                            </strong>
+                            <div style="color: #666; font-size: 11px; margin-top: 2px;">postado ${tempoPassado}</div>
+                        </div>
                         ${podeApagar ? `<button onclick="apagarMensagem(${msg.id})" style="background:none; border:none; color:#ff4444; cursor:pointer;">🗑️</button>` : ''}
                     </div>
-                    <p style="color: #eee; margin: 12px 0;">${msg.conteudo}</p>
+                    <p style="color: #eee; margin: 12px 0; line-height: 1.4;">${msg.conteudo}</p>
                     <button onclick="curtirMensagem(${msg.id}, ${msg.curtidas || 0})" 
-                        style="background: ${jaCurtiu ? 'rgba(255,0,0,0.1)' : '#1a1a1a'}; border: 1px solid ${jaCurtiu ? '#ff4444' : '#333'}; color: white; padding: 6px 14px; border-radius: 20px; cursor: ${jaCurtiu ? 'default' : 'pointer'}; display: flex; align-items: center; gap: 6px;">
-                        ${jaCurtiu ? '❤️' : '💖'} <span>${msg.curtidas || 0}</span>
-                    </button>
-                </div>`;
-        });
-    } catch (e) { console.error(e); }
-}
-
-async function curtirMensagem(id, totalAtual) {
-    if (localStorage.getItem(`curtiu_${id}`)) return; 
-    const { error } = await supabaseClient.from('Mural_Familia').update({ curtidas: totalAtual + 1 }).eq('id', id);
-    if (!error) {
-        localStorage.setItem(`curtiu_${id}`, "true");
-        carregarMensagens(); 
-    }
-}
-
-async function postarRecado() {
-    const campo = document.getElementById('novoRecado');
-    const texto = campo.value.trim();
-    if
+                        style="background: ${jaCurtiu ? 'rgba(255,0,0,0.1)' : '#1a1a1a'}; border: 1px solid ${jaCurtiu ? '#ff4444' : '#333'}; color: white; padding: 6px 14px; border-
