@@ -25,11 +25,27 @@
 
         /* Atributos Menores */
         .mini-stats { display: flex; justify-content: space-around; background: #0a0a0a; padding: 5px; font-size: 12px; color: #888; border-bottom: 1px solid #222; }
-        .mini-stats span { color: #ccc; }
 
-        /* Estilo do Monstro e Log (Mantidos) */
+        /* Animação de Sacudida (Shake) */
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+        .shake-anim { animation: shake 0.2s; }
+
+        /* Área do Monstro */
         .monster-area { margin-top: 40px; }
-        .monster-card { background: #1a1a1a; padding: 40px; border-radius: 25px; display: inline-block; cursor: pointer; border: 2px solid #333; }
+        .monster-card { background: #1a1a1a; padding: 40px; border-radius: 25px; display: inline-block; cursor: pointer; border: 2px solid #333; transition: transform 0.1s; }
+        
         #game-log { margin: 20px auto; width: 90%; max-width: 600px; background: #050505; border: 1px solid #222; padding: 15px; font-size: 14px; height: 120px; overflow-y: auto; border-radius: 10px; text-align: left; }
 
         /* Modal Level Up */
@@ -48,18 +64,9 @@
             <span style="font-size: 12px;">Nível <span id="display-lvl">1</span></span>
         </div>
         <div class="stats-bars">
-            <div class="bar-container">
-                <div id="hp-fill" class="bar-fill hp-bar"></div>
-                <div class="bar-text">HP: <span id="hp-txt">0/0</span></div>
-            </div>
-            <div class="bar-container">
-                <div id="mp-fill" class="bar-fill mp-bar"></div>
-                <div class="bar-text">MP: <span id="mp-txt">0/0</span></div>
-            </div>
-            <div class="bar-container">
-                <div id="xp-fill" class="bar-fill xp-bar"></div>
-                <div class="bar-text">XP: <span id="xp-txt">0/0</span></div>
-            </div>
+            <div class="bar-container"><div id="hp-fill" class="bar-fill hp-bar"></div><div class="bar-text">HP: <span id="hp-txt">0/0</span></div></div>
+            <div class="bar-container"><div id="mp-fill" class="bar-fill mp-bar"></div><div class="bar-text">MP: <span id="mp-txt">0/0</span></div></div>
+            <div class="bar-container"><div id="xp-fill" class="bar-fill xp-bar"></div><div class="bar-text">XP: <span id="xp-txt">0/0</span></div></div>
         </div>
     </div>
 
@@ -71,6 +78,129 @@
     </div>
 
     <div class="monster-area">
-        <div class="monster-card" onclick="atacar()">
+        <div id="card-monstro" class="monster-card" onclick="atacar()">
             <h2 id="monster-name">👾 SLIME DE ESGOTO</h2>
-            <div style="color: #ff4444; font-size: 24px; font-weight: bold;">HP: <span id="monster-hp">1
+            <div style="color: #ff4444; font-size: 24px; font-weight: bold;">HP: <span id="monster-hp">10</span></div>
+            <small style="color: #444;">CLIQUE PARA ATACAR</small>
+        </div>
+    </div>
+
+    <div id="game-log">>> Iniciando aventura...</div>
+
+    <div id="modal-overlay"></div>
+    <div id="level-up-modal">
+        <h2 style="color: #00ff00;">🌟 LEVEL UP!</h2>
+        <p>Pontos: <span id="modal-pontos" style="color: #ffcc00;">0</span></p>
+        <div class="stat-upgrade"><span>Força</span> <button class="btn-up" onclick="distribuir('forca')">+</button></div>
+        <div class="stat-upgrade"><span>Agilidade</span> <button class="btn-up" onclick="distribuir('agilidade')">+</button></div>
+        <div class="stat-upgrade"><span>Vitalidade</span> <button class="btn-up" onclick="distribuir('vitalidade')">+</button></div>
+        <div class="stat-upgrade"><span>Inteligência</span> <button class="btn-up" onclick="distribuir('inteligencia')">+</button></div>
+        <button onclick="fecharModal()" style="margin-top:20px; width:100%; padding:10px; cursor:pointer;">Fechar</button>
+    </div>
+
+    <button class="btn-voltar" onclick="window.location.href='selecao.html'">⬅ Sair</button>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="combate.js"></script>
+    <script>
+        const SUPABASE_URL = 'https://zkeshycglokyycuplczn.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_iDavmG9sQzqW6jPrOCjsmQ_5ISCiZUF';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let heroi = null;
+        let monsterHP = 10;
+
+        async function iniciar() {
+            const heroiId = localStorage.getItem("heroi_selecionado_id");
+            const { data } = await supabaseClient.from('personagens').select('*').eq('id', heroiId).single();
+            if (data) {
+                heroi = data;
+                atualizarInterface();
+                if (heroi.pontos_livres > 0) abrirModal();
+            }
+        }
+
+        function atualizarInterface() {
+            const maxHP = 20 + (heroi.vitalidade * 10);
+            const maxMP = 10 + (heroi.inteligencia * 5);
+            const xpProxNivel = heroi.nivel * 20;
+
+            document.getElementById('display-nome').innerText = heroi.nome_heroi;
+            document.getElementById('display-lvl').innerText = heroi.nivel;
+            document.getElementById('hp-txt').innerText = `${maxHP}/${maxHP}`;
+            document.getElementById('mp-txt').innerText = `${maxMP}/${maxMP}`;
+            document.getElementById('xp-txt').innerText = `${heroi.xp}/${xpProxNivel}`;
+
+            document.getElementById('display-for').innerText = heroi.forca;
+            document.getElementById('display-agi').innerText = heroi.agilidade;
+            document.getElementById('display-int').innerText = heroi.inteligencia;
+            document.getElementById('display-vit').innerText = heroi.vitalidade;
+
+            document.getElementById('hp-fill').style.width = "100%";
+            document.getElementById('mp-fill').style.width = "100%";
+            document.getElementById('xp-fill').style.width = `${(heroi.xp / xpProxNivel) * 100}%`;
+        }
+
+        function atacar() {
+            if (!heroi) return;
+            
+            // Ativa a animação de sacudida
+            const card = document.getElementById('card-monstro');
+            card.classList.remove('shake-anim');
+            void card.offsetWidth; // Truque para resetar a animação
+            card.classList.add('shake-anim');
+
+            const dano = calcularDano(heroi);
+            monsterHP -= dano;
+            
+            escreverLog(dano > heroi.forca * 2 ? `🔥 CRÍTICO! ${dano} de dano!` : `Causou ${dano} de dano.`);
+
+            if (monsterHP <= 0) {
+                heroi.xp += 5;
+                if (verificarLevelUp(heroi)) {
+                    heroi.pontos_livres = (heroi.pontos_livres || 0) + 5;
+                    abrirModal();
+                }
+                monsterHP = 10 + (heroi.nivel * 5);
+                salvarProgresso();
+                atualizarInterface();
+            }
+            document.getElementById('monster-hp').innerText = Math.max(0, monsterHP);
+        }
+
+        async function salvarProgresso() {
+            await supabaseClient.from('personagens').update({ 
+                xp: heroi.xp, nivel: heroi.nivel, pontos_livres: heroi.pontos_livres 
+            }).eq('id', heroi.id);
+        }
+
+        function abrirModal() {
+            document.getElementById('modal-overlay').style.display = 'block';
+            document.getElementById('level-up-modal').style.display = 'block';
+        }
+
+        function fecharModal() {
+            document.getElementById('modal-overlay').style.display = 'none';
+            document.getElementById('level-up-modal').style.display = 'none';
+            atualizarInterface();
+        }
+
+        async function distribuir(stat) {
+            if (heroi.pontos_livres > 0) {
+                heroi[stat]++;
+                heroi.pontos_livres--;
+                document.getElementById('modal-pontos').innerText = heroi.pontos_livres;
+                await supabaseClient.from('personagens').update({ [stat]: heroi[stat], pontos_livres: heroi.pontos_livres }).eq('id', heroi.id);
+                atualizarInterface();
+            }
+        }
+
+        function escreverLog(msg) {
+            const log = document.getElementById('game-log');
+            log.innerHTML = `> ${msg}<br>` + log.innerHTML;
+        }
+
+        iniciar();
+    </script>
+</body>
+</html>
