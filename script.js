@@ -4,13 +4,11 @@ const SUPABASE_KEY = 'sb_publishable_iDavmG9sQzqW6jPrOCjsmQ_5ISCiZUF';
 
 let nomeUsuarioLogado = "";
 
-// --- FUNÇÃO DE LOGIN ---
+// --- 1. FUNÇÃO DE LOGIN (VERSÃO BLINDADA) ---
 async function fazerLogin() {
     const emailDigitado = document.getElementById('userName').value.trim().toLowerCase();
     const senhaDigitada = document.getElementById('userPass').value.trim();
     const msgErro = document.getElementById('erro');
-
-    if (!msgErro) return; 
 
     try {
         const resposta = await fetch(`${SUPABASE_URL}/rest/v1/usuarios_familia?email=eq.${emailDigitado}&senha=eq.${senhaDigitada}`, {
@@ -22,69 +20,64 @@ async function fazerLogin() {
 
         const dados = await resposta.json();
 
-        if (dados.length > 0) {
+        if (dados && dados.length > 0) {
             const usuario = dados[0];
-            nomeUsuarioLogado = usuario.nome_exibicao;
-
-            // PREENCHE OS DADOS DO PERFIL NO HTML
-            document.getElementById('perfil-nome').innerText = usuario.nome_exibicao;
-            document.getElementById('perfil-bio').innerText = usuario.bio || "Olá, família!";
             
-            // --- AJUSTE DA FOTO OU INICIAL ---
-            const fotoElemento = document.getElementById('perfil-foto');
-            const urlFoto = usuario.foto_url;
+            // Define o nome (tenta diferentes colunas para garantir)
+            nomeUsuarioLogado = usuario.nome_exibicao || usuario.nome || "Usuário";
 
-            if (urlFoto && urlFoto.trim() !== "") {
-                // Se tiver foto, garante que é uma tag <img> e coloca o link
-                if (fotoElemento.tagName === 'IMG') {
+            // Preenche dados do perfil
+            if(document.getElementById('perfil-nome')) document.getElementById('perfil-nome').innerText = nomeUsuarioLogado;
+            if(document.getElementById('perfil-bio')) document.getElementById('perfil-bio').innerText = usuario.bio || "Olá, família!";
+            
+            // Lógica da Foto ou Inicial
+            const fotoElemento = document.getElementById('perfil-foto');
+            if (fotoElemento) {
+                const urlFoto = usuario.foto_url || usuario.foto;
+                
+                if (urlFoto && urlFoto.trim() !== "") {
                     fotoElemento.src = urlFoto;
                 } else {
-                    // Se antes era um círculo de letra, volta a ser uma imagem
-                    fotoElemento.parentElement.innerHTML = `<img id="perfil-foto" src="${urlFoto}" style="width:80px; height:80px; border-radius:50%; border:2px solid #00ff00; object-fit: cover; margin-bottom: 10px;">`;
+                    const inicial = nomeUsuarioLogado.charAt(0).toUpperCase();
+                    const pai = fotoElemento.parentElement;
+                    pai.innerHTML = `
+                        <div id="perfil-foto" style="width:80px; height:80px; border-radius:50%; background:#222; color:#00ff00; 
+                                    display:flex; align-items:center; justify-content:center; 
+                                    font-size:35px; font-weight:bold; border:2px solid #00ff00; margin: 0 auto; margin-bottom: 10px;">
+                            ${inicial}
+                        </div>`;
                 }
-            } else {
-                // Se NÃO tiver foto, cria o círculo com a inicial
-                const inicial = usuario.nome_exibicao ? usuario.nome_exibicao.charAt(0).toUpperCase() : "U";
-                const paiDaFoto = fotoElemento.parentElement;
-                paiDaFoto.innerHTML = `
-                    <div id="perfil-foto" style="width:80px; height:80px; border-radius:50%; background:#222; color:#00ff00; 
-                                display:flex; align-items:center; justify-content:center; 
-                                font-size:35px; font-weight:bold; border:2px solid #00ff00; margin: 0 auto; margin-bottom: 10px;">
-                        ${inicial}
-                    </div>`;
             }
 
-            // TROCA AS TELAS
+            // Troca as telas
             document.getElementById('login-area').style.display = 'none';
             document.getElementById('feed-area').style.display = 'block';
 
             carregarMensagens();
         } else {
-            msgErro.innerText = "Usuário ou senha incorretos!";
+            if (msgErro) msgErro.innerText = "Usuário ou senha incorretos!";
         }
     } catch (erro) {
         console.error("Erro no login:", erro);
+        alert("Erro técnico ao tentar logar.");
     }
 }
 
-// --- FUNÇÃO PARA BUSCAR RECADOS NO MURAL ---
+// --- 2. CARREGAR MENSAGENS ---
 async function carregarMensagens() {
     const mural = document.getElementById('mural-mensagens');
     if (!mural) return;
 
     try {
         const resposta = await fetch(`${SUPABASE_URL}/rest/v1/Mural_Familia?select=*&order=created_at.desc`, {
-            headers: { 
-                'apikey': SUPABASE_KEY, 
-                'Authorization': `Bearer ${SUPABASE_KEY}` 
-            }
+            headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
         });
         
         const mensagens = await resposta.json();
         mural.innerHTML = ""; 
 
         if (mensagens.length === 0) {
-            mural.innerHTML = "<p style='color: #888;'>Nenhum recado ainda. Seja o primeiro!</p>";
+            mural.innerHTML = "<p style='color: #888;'>Nenhum recado ainda.</p>";
             return;
         }
 
@@ -97,3 +90,6 @@ async function carregarMensagens() {
                 <div class="post" style="background:#1a1a1a; padding:15px; border-radius:10px; margin-bottom:15px; border:1px solid #333;">
                     ${botaoExcluir}
                     <strong style="color:#00ff00;">${msg.autor}:</strong>
+                    <p style="margin:10px 0; color:#eee;">${msg.conteudo}</p>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <button onclick="curtirPost(${msg.id}, ${msg.curtidas || 0})" style="background:#333; border:none; border-radius:20px; color:white; padding: 5
