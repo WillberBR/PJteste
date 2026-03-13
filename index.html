@@ -80,11 +80,21 @@
             <p id="mensagemErro" style="color: #ff4444; margin-top: 10px;"></p>
         </div>
 
-        <div id="areaPrivada" style="display: none;">
-            <h2 style="color: #00ff00;">Acesso Concedido!</h2>
-            <p>Bem-vindo à área secreta da família.</p>
-            <button class="btn" onclick="location.reload()">SAIR</button>
-        </div>
+       <div id="areaPrivada" style="display: none; width: 90%;">
+    <h2 style="color: #00ff00;">Área Secreta</h2>
+    
+    <div style="background: #1e1e1e; padding: 15px; border-radius: 10px; text-align: left;">
+        <h4>Mural da Família</h4>
+        <input type="text" id="novoRecado" placeholder="Escreva um recado..." style="width: 70%; margin-bottom: 5px;">
+        <button class="btn" onclick="postarRecado()" style="padding: 10px;">Postar</button>
+        
+        <div id="listaRecados" style="margin-top: 20px;">
+            </div>
+    </div>
+
+    <br>
+    <button class="btn" onclick="logout()" style="background: #444; color: white;">SAIR</button>
+</div>
     </div>
 
     <script>
