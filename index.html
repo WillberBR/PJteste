@@ -131,6 +131,46 @@
     }
 
     function logout() {
+          // Função para carregar recados salvos ao abrir o site
+    window.onload = function() {
+        const usuarioSalvo = localStorage.getItem('usuarioLogado');
+        if (usuarioSalvo) {
+            mostrarAreaPrivada(usuarioSalvo);
+            exibirRecados(); // Mostra os recados salvos
+        }
+    };
+
+    function postarRecado() {
+        const input = document.getElementById('novoRecado');
+        const texto = input.value;
+        
+        if (texto.trim() === "") return; // Não posta se estiver vazio
+
+        // Pegamos os recados que já existem ou criamos uma lista vazia
+        let recados = JSON.parse(localStorage.getItem('mural')) || [];
+        
+        // Adicionamos o novo recado
+        recados.push(texto);
+        
+        // Salvamos de volta no LocalStorage
+        localStorage.setItem('mural', JSON.stringify(recados));
+        
+        input.value = ""; // Limpa o campo
+        exibirRecados();  // Atualiza a tela
+    }
+
+    function exibirRecados() {
+        const mural = document.getElementById('listaRecados');
+        const recados = JSON.parse(localStorage.getItem('mural')) || [];
+        
+        // Criamos o HTML para cada recado
+        mural.innerHTML = recados.map(msg => `
+            <div style="background: #333; padding: 10px; border-radius: 5px; margin-bottom: 8px; border-left: 4px solid #00ff00;">
+                ${msg}
+            </div>
+        `).join('');
+    }
+
         // Limpa o que foi salvo
         localStorage.removeItem('usuarioLogado');
         location.reload(); // Recarrega a página para voltar ao login
