@@ -3,6 +3,7 @@ const SUPABASE_URL = 'https://zkeshycglokyycuplczn.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_iDavmG9sQzqW6jPrOCjsmQ_5ISCiZUF';
 
 let nomeUsuarioLogado = "";
+let isAdmin = false; // Variável para controlar se você é o chefe
 
 // --- 1. FUNÇÃO DE LOGIN ---
 async function fazerLogin() {
@@ -17,28 +18,29 @@ async function fazerLogin() {
 
     try {
         const resposta = await fetch(`${SUPABASE_URL}/rest/v1/usuarios_familia?email=eq.${emailDigitado}&senha=eq.${senhaDigitada}`, {
-            headers: {
-                'apikey': SUPABASE_KEY,
-                'Authorization': `Bearer ${SUPABASE_KEY}`
-            }
+            headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
         });
 
         const dados = await resposta.json();
 
         if (dados && dados.length > 0) {
             const usuario = dados[0];
-            nomeUsuarioLogado = usuario.nome_exibicao || usuario.nome || "Usuário";
+            nomeUsuarioLogado = usuario.nome_exibicao || "Usuário";
+            
+            // VERIFICA SE É ADMIN NO BANCO DE DADOS
+            isAdmin = (usuario.role === "admin"); 
 
             // Preenche Perfil
             if(document.getElementById('perfil-nome')) document.getElementById('perfil-nome').innerText = nomeUsuarioLogado;
             if(document.getElementById('perfil-bio')) document.getElementById('perfil-bio').innerText = usuario.bio || "Olá, família!";
             
-            // Lógica da Foto ou Inicial
+            // Lógica da Foto ou Inicial (Evita o erro da imagem quebrada)
             const fotoElemento = document.getElementById('perfil-foto');
             if (fotoElemento) {
-                const urlFoto = usuario.foto_url || usuario.foto;
-                if (urlFoto && urlFoto.trim() !== "") {
+                const urlFoto = usuario.foto_url;
+                if (urlFoto && urlFoto.trim() !== "" && urlFoto !== "NULL") {
                     fotoElemento.src = urlFoto;
+                    fotoElemento.style.display = "block";
                 } else {
                     const inicial = nomeUsuarioLogado.charAt(0).toUpperCase();
                     fotoElemento.parentElement.innerHTML = `
@@ -61,7 +63,7 @@ async function fazerLogin() {
     }
 }
 
-// --- 2. CARREGAR MENSAGENS ---
+// --- 2. CARREGAR MENSAGENS (COM PODER DE ADMIN) ---
 async function carregarMensagens() {
     const mural = document.getElementById('mural-mensagens');
     if (!mural) return;
@@ -74,7 +76,10 @@ async function carregarMensagens() {
         mural.innerHTML = ""; 
 
         mensagens.forEach(msg => {
-            const botaoExcluir = msg.autor === nomeUsuarioLogado 
+            // REGRA: Se for o autor OU se for ADMIN, mostra a lixeira
+            const podeExcluir = (msg.autor === nomeUsuarioLogado || isAdmin);
+            
+            const botaoExcluir = podeExcluir 
                 ? `<button onclick="excluirPost(${msg.id})" style="background:none; border:none; color:#ff4444; cursor:pointer; float:right; font-size:18px;">🗑️</button>` 
                 : "";
 
@@ -82,6 +87,7 @@ async function carregarMensagens() {
                 <div class="post" style="background:#1a1a1a; padding:15px; border-radius:10px; margin-bottom:15px; border:1px solid #333;">
                     ${botaoExcluir}
                     <strong style="color:#00ff00;">${msg.autor}:</strong>
+                    ${isAdmin && msg.autor !== nomeUsuarioLogado ? ' <small style="color:#666;">(Modo Admin)</small>' : ''}
                     <p style="margin:10px 0; color:#eee;">${msg.conteudo}</p>
                     <div style="display: flex; align-items: center; gap: 15px;">
                         <button onclick="curtirPost(${msg.id}, ${msg.curtidas || 0})" style="background:#333; border:none; border-radius:20px; color:white; padding: 5px 12px; cursor:pointer; display:flex; align-items:center; gap:5px;">
@@ -96,7 +102,7 @@ async function carregarMensagens() {
     }
 }
 
-// --- 3. POSTAR ---
+// --- 3. FUNÇÃO PARA POSTAR ---
 async function postarMensagem() {
     const campo = document.getElementById('textoMensagem');
     if (!campo.value.trim()) return;
@@ -104,56 +110,41 @@ async function postarMensagem() {
     try {
         await fetch(`${SUPABASE_URL}/rest/v1/Mural_Familia`, {
             method: 'POST',
-            headers: {
-                'apikey': SUPABASE_KEY,
-                'Authorization': `Bearer ${SUPABASE_KEY}`,
-                'Content-Type': 'application/json'
-            },
+            headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({ autor: nomeUsuarioLogado, conteudo: campo.value.trim() })
         });
         campo.value = ""; 
         carregarMensagens();    
-    } catch (e) {
-        console.error("Erro ao postar:", e);
-    }
+    } catch (e) { console.error(e); }
 }
 
-// --- 4. CURTIR ---
+// --- 4. FUNÇÃO PARA CURTIR ---
 async function curtirPost(id, curtidasAtuais) {
     if (localStorage.getItem(`curtido_${id}`)) {
-        alert("Você já curtiu este recado! ❤️");
+        alert("Você já curtiu este recado! ❤️"); //
         return;
     }
-
     try {
         await fetch(`${SUPABASE_URL}/rest/v1/Mural_Familia?id=eq.${id}`, {
             method: 'PATCH',
-            headers: {
-                'apikey': SUPABASE_KEY,
-                'Authorization': `Bearer ${SUPABASE_KEY}`,
-                'Content-Type': 'application/json'
-            },
+            headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({ curtidas: curtidasAtuais + 1 })
         });
         localStorage.setItem(`curtido_${id}`, "true");
         carregarMensagens();
-    } catch (e) {
-        console.error("Erro ao curtir:", e);
-    }
+    } catch (e) { console.error(e); }
 }
 
-// --- 5. EXCLUIR ---
+// --- 5. FUNÇÃO PARA EXCLUIR ---
 async function excluirPost(id) {
-    if (!confirm("Apagar recado?")) return;
+    if (!confirm("Tem certeza que quer apagar este recado?")) return;
     try {
         await fetch(`${SUPABASE_URL}/rest/v1/Mural_Familia?id=eq.${id}`, {
             method: 'DELETE',
             headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
         });
         carregarMensagens();
-    } catch (e) {
-        console.error("Erro ao excluir:", e);
-    }
+    } catch (e) { console.error(e); }
 }
 
 // --- 6. AUXILIARES ---
