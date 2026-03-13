@@ -10,21 +10,11 @@
             color: white;
             font-family: 'Segoe UI', Arial, sans-serif;
             display: flex;
-            flex-direction: column; /* Organiza em coluna */
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             height: 100vh;
             margin: 0;
-        }
-
-        h1 {
-            border: 2px solid #00ff00;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 15px rgba(0, 255, 0, 0.3); /* Brilho suave */
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            text-align: center;
         }
 
         .container {
@@ -32,24 +22,43 @@
             animation: fadeIn 1.5s ease-in;
         }
 
+        h1 {
+            border: 2px solid #00ff00;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .login-box {
+            margin-top: 30px;
+            border-top: 1px solid #333;
+            padding-top: 20px;
+        }
+
+        input {
+            padding: 12px;
+            border-radius: 5px;
+            border: 1px solid #333;
+            margin-bottom: 10px;
+            background: #1e1e1e;
+            color: white;
+            width: 80%;
+        }
+
         .btn {
             background-color: #00ff00;
             color: #121212;
-            padding: 15px 30px;
+            padding: 12px 25px;
             border: none;
             border-radius: 5px;
             font-weight: bold;
             cursor: pointer;
-            text-decoration: none;
             transition: 0.3s;
-            margin-top: 20px;
-            display: inline-block;
         }
 
-        .btn:hover {
-            background-color: #00cc00;
-            transform: scale(1.05); /* Aumenta um pouco ao passar o dedo/mouse */
-        }
+        .btn:hover { background-color: #00cc00; transform: scale(1.05); }
 
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
@@ -61,17 +70,41 @@
 
     <div class="container">
         <h1>Sincronizado: PC + Android</h1>
-        <p>Desenvolvido inteiramente via Acode & GitHub</p>
         
-        <a href="https://github.com/WillberBR" class="btn">VER MEU GITHUB</a>
-        <div style="margin-top: 50px; border-top: 1px solid #333; padding-top: 20px;">
-    <h3>Área do Usuário</h3>
-    <input type="text" placeholder="Usuário" style="padding: 10px; border-radius: 5px; border: none; margin-bottom: 10px;"><br>
-    <input type="password" placeholder="Senha" style="padding: 10px; border-radius: 5px; border: none; margin-bottom: 10px;"><br>
-    <button class="btn" onclick="alert('Sistema de login será conectado em breve!')">ENTRAR</button>
-</div>
+        <div class="login-box" id="areaLogin">
+            <h3>Área do Usuário</h3>
+            <input type="text" id="campoUsuario" placeholder="Usuário">
+            <input type="password" id="campoSenha" placeholder="Senha">
+            <br>
+            <button class="btn" onclick="fazerLogin()">ENTRAR</button>
+            <p id="mensagemErro" style="color: #ff4444; margin-top: 10px;"></p>
+        </div>
 
+        <div id="areaPrivada" style="display: none;">
+            <h2 style="color: #00ff00;">Acesso Concedido!</h2>
+            <p>Bem-vindo à área secreta da família.</p>
+            <button class="btn" onclick="location.reload()">SAIR</button>
+        </div>
     </div>
+
+    <script>
+        function fazerLogin() {
+            // Pegamos os valores digitados
+            const usuario = document.getElementById('campoUsuario').value;
+            const senha = document.getElementById('campoSenha').value;
+            const erro = document.getElementById('mensagemErro');
+
+            // Definimos uma senha de teste (No futuro isso virá do banco de dados)
+            if (usuario === "admin" && senha === "1234") {
+                // Se estiver certo, esconde o login e mostra o conteúdo
+                document.getElementById('areaLogin').style.display = 'none';
+                document.getElementById('areaPrivada').style.display = 'block';
+            } else {
+                // Se estiver errado, mostra erro
+                erro.innerText = "Usuário ou senha incorretos!";
+            }
+        }
+    </script>
 
 </body>
 </html>
