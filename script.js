@@ -1,29 +1,41 @@
-function fazerLogin() {
-    // Pegamos os elementos da tela
-    const campoUsuario = document.getElementById('userName');
-    const campoSenha = document.getElementById('userPass');
+// CONFIGURAÇÃO DO COFRE (SUPABASE)
+const SUPABASE_URL = 'https://zkeshycglokyycuplczn.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_iDavmG9sQzqW6jPrOCjsmQ_5ISCiZUF'; // Cole aquela chave que você me mandou aqui
+
+async function fazerLogin() {
+    const emailDigitado = document.getElementById('userName').value.trim().toLowerCase();
+    const senhaDigitada = document.getElementById('userPass').value.trim();
     const msgErro = document.getElementById('erro');
 
-    // Pegamos os valores e limpamos espaços extras
-    const usuarioDigitado = campoUsuario.value.trim().toLowerCase();
-    const senhaDigitada = campoSenha.value.trim();
+    // Avisa que está carregando
+    msgErro.style.color = "yellow";
+    msgErro.innerText = "Verificando no banco de dados...";
 
-    // LISTA DE USUÁRIOS (Verifique se a senha está exatamente como você quer)
-    const usuarios = {
-        "adamswilber@gmail.com": "180297dk",
-        "pai": "familia01",
-        "mae": "familia02"
-    };
+    try {
+        // Faz a busca na tabela que você criou
+        const resposta = await fetch(`${SUPABASE_URL}/rest/v1/usuarios_familia?email=eq.${emailDigitado}&senha=eq.${senhaDigitada}`, {
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${SUPABASE_KEY}`
+            }
+        });
 
-    // TESTE LÓGICO
-    if (usuarios[usuarioDigitado] && usuarios[usuarioDigitado] === senhaDigitada) {
-        document.getElementById('login-area').style.display = 'none';
-        document.getElementById('feed-area').style.display = 'block';
-        document.getElementById('bemVindo').innerText = "Olá! Login realizado com sucesso.";
-        msgErro.innerText = ""; // Limpa erro se houver
-    } else {
-        msgErro.innerText = "Usuário ou senha incorretos!";
-        console.log("Tentativa com:", usuarioDigitado, "| Senha:", senhaDigitada);
+        const dados = await resposta.json();
+
+        // Se encontrou alguém com esse e-mail e senha
+        if (dados.length > 0) {
+            const usuario = dados[0];
+            document.getElementById('login-area').style.display = 'none';
+            document.getElementById('feed-area').style.display = 'block';
+            document.getElementById('bemVindo').innerText = "Olá, " + usuario.nome_exibicao + "!";
+            msgErro.innerText = "";
+        } else {
+            msgErro.style.color = "#ff4d4d";
+            msgErro.innerText = "Usuário ou senha não encontrados no banco!";
+        }
+    } catch (erro) {
+        console.error("Erro na conexão:", erro);
+        msgErro.innerText = "Erro ao conectar com o servidor.";
     }
 }
 
