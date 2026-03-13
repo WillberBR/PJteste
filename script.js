@@ -23,10 +23,8 @@ async function fazerLogin() {
             const usuario = usuarios[0];
             nomeUsuarioLogado = usuario.nome_exibicao;
 
-            // 1. GERA O AVATAR COM INICIAL NEON
             gerarAvatarNeon(nomeUsuarioLogado);
 
-            // 2. ATUALIZA INTERFACE
             document.getElementById('perfil-nome').innerText = nomeUsuarioLogado;
             document.getElementById('login-area').style.display = 'none';
             document.getElementById('feed-area').style.display = 'block';
@@ -48,7 +46,7 @@ function gerarAvatarNeon(nome) {
     
     const inicial = nome.charAt(0).toUpperCase();
     const ehWillber = (nome.toLowerCase() === "willber");
-    const corBrilho = ehWillber ? "#ff0000" : "#00ff00"; // Vermelho para você, Verde para os outros
+    const corBrilho = ehWillber ? "#ff0000" : "#00ff00";
 
     container.innerHTML = `
         <div style="width: 80px; height: 80px; border-radius: 50%; background: #111; color: ${corBrilho}; 
@@ -59,14 +57,14 @@ function gerarAvatarNeon(nome) {
     `;
 }
 
-// FUNÇÃO PARA CARREGAR MURAL
+// FUNÇÃO PARA CARREGAR MURAL (TABELA CORRIGIDA PARA: Mural_Familia)
 async function carregarMensagens() {
     const mural = document.getElementById('mural-recados');
     mural.innerHTML = "Carregando recados...";
 
     try {
         const { data: mensagens, error } = await supabaseClient
-            .from('mensagens_familia')
+            .from('Mural_Familia') 
             .select('*')
             .order('created_at', { ascending: false });
 
@@ -75,50 +73,49 @@ async function carregarMensagens() {
         mural.innerHTML = "";
         mensagens.forEach(msg => {
             const ehWillber = (msg.autor.toLowerCase() === "willber");
-            
-            // Cores: Vermelho para Admin, Azul para Usuários
             const corNome = ehWillber ? "#ff0000" : "#00d9ff";
             const brilhoSombra = ehWillber ? "0 0 15px #ff0000" : "0 0 10px #00d9ff";
-            
-            // Ícones exclusivos do Admin
+
             const iconesAdmin = ehWillber ? `
                 <span style="color:#FFD700; text-shadow: 0 0 10px #FFD700; font-size:16px; margin-left:8px;">👑</span>
                 <span style="color:#FFD700; font-size:10px; margin-left:4px; font-weight: bold;">★ VERIFICADO</span>
             ` : '';
 
+            // Lógica do botão apagar: Willber apaga tudo, outros só o que postaram
+            const podeApagar = (nomeUsuarioLogado.toLowerCase() === "willber" || nomeUsuarioLogado === msg.autor);
+
             mural.innerHTML += `
-                <div style="border: 1px solid ${ehWillber ? '#ff0000' : '#333'}; background: #111; padding: 15px; border-radius: 12px; margin-bottom: 15px; position: relative; box-shadow: ${ehWillber ? '0 0 10px rgba(255,0,0,0.1)' : 'none'};">
-                    <div style="display: flex; align-items: center; margin-bottom: 8px;">
-                        <strong style="color: ${corNome}; text-shadow: ${brilhoSombra}; font-size: 1.1em; text-transform: uppercase; letter-spacing: 1px;">
-                            ${msg.autor}
-                        </strong>
-                        ${iconesAdmin}
+                <div style="border: 1px solid ${ehWillber ? '#ff0000' : '#333'}; background: #111; padding: 15px; border-radius: 12px; margin-bottom: 15px; position: relative;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <div style="display: flex; align-items: center;">
+                            <strong style="color: ${corNome}; text-shadow: ${brilhoSombra}; font-size: 1.1em; text-transform: uppercase;">
+                                ${msg.autor}
+                            </strong>
+                            ${iconesAdmin}
+                        </div>
+                        ${podeApagar ? `<button onclick="apagarMensagem(${msg.id})" style="background:none; border:none; color:#ff4444; cursor:pointer; font-size:18px;" title="Apagar">🗑️</button>` : ''}
                     </div>
                     <p style="color: #eee; line-height: 1.5; margin: 0;">${msg.conteudo}</p>
-                    <small style="color: #555; font-size: 0.8em; display: block; margin-top: 10px;">Enviado agora</small>
                 </div>
             `;
         });
     } catch (e) {
         mural.innerHTML = "Erro ao carregar mural.";
+        console.error(e);
     }
 }
 
-// FUNÇÃO PARA POSTAR
+// FUNÇÃO PARA POSTAR (TABELA CORRIGIDA PARA: Mural_Familia)
 async function postarRecado() {
     const texto = document.getElementById('novoRecado').value.trim();
     if (!texto) return;
 
     const { error } = await supabaseClient
-        .from('mensagens_familia')
+        .from('Mural_Familia')
         .insert([{ autor: nomeUsuarioLogado, conteudo: texto }]);
 
     if (!error) {
         document.getElementById('novoRecado').value = "";
         carregarMensagens();
-    }
-}
-
-function sair() {
-    location.reload();
-}
+    } else {
+        alert("Erro ao postar: " + error.message);
