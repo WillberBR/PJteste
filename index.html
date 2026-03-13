@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mural Família Cloud</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+
+    <style>
+        body { background-color: #121212; color: white; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
+        .container { width: 100%; max-width: 450px; text-align: center; }
+        h1 { border: 2px solid #00ff00; padding: 15px; border-radius: 10px; color: #00ff00; }
+        .box { background: #1e1e1e; padding: 20px; border-radius: 15px; margin-top: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        input { padding: 12px; border-radius: 5px; border: 1px solid #333; margin-bottom: 10px; background: #121212; color: white; width: 85%; }
+        .btn { background-color: #00ff00; color: #121212; padding: 12px 20px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; width: 95%; }
+        .recado-card { background: #252525; padding: 15px; border-radius: 8px; margin-top: 15px; border-left: 5px solid #00ff00; text-align: left; position: relative; }
+        .excluir-btn { position: absolute; top: 10px; right: 10px; color: #ff4444; cursor: pointer; font-weight: bold; }
+        .hora { font-size: 0.7em; color: #888; display: block; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Mural da Família</h1>
+
+        <div id="areaLogin" class="box">
+            <input type="text" id="campoUsuario" placeholder="Usuário">
+            <input type="password" id="campoSenha" placeholder="Senha">
+            <button class="btn" onclick="fazerLogin()">ENTRAR</button>
+        </div>
+
+        <div id="areaPrivada" style="display: none;">
+            <div class="box">
+                <h3 id="boasVindas">Olá!</h3>
+                <input type="text" id="novoRecado" placeholder="Digite sua mensagem...">
+                <button class="btn" onclick="postarRecado()">POSTAR NA NUVEM</button>
+            </div>
+            <div id="listaRecados"></div>
+            <button class="btn" onclick="logout()" style="background:#333; color:white; margin-top:30px; width:50%">SAIR</button>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIGURAÇÃO FIREBASE ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyBnxNTCOWLPPsrIlu2_Kgd2l0qTZP-aUt8",
+            authDomain: "mural-familia-9223d.firebaseapp.com",
+            databaseURL: "https://mural-familia-9223d-default-rtdb.firebaseio.com/",
+            projectId: "mural-familia-9223d",
+            storageBucket: "mural-familia-9223d.firebasestorage.app",
+            messagingSenderId: "577356833001",
+            appId: "1:577356833001:web:0cdf6bca4c4289dadcd078"
+        };
+
+        // Inicializa o Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // --- LÓGICA DE LOGIN ---
+        function fazerLogin() {
+            const user = document.getElementById('campoUsuario').value;
+            const pass = document.getElementById('campoSenha').value;
+            if(user.toLowerCase() === "admin" && pass === "1234") {
+                localStorage.setItem('usuarioLogado', user);
+                mostrarAreaPrivada(user);
+            }
+        }
+
+        function mostrarAreaPrivada(nome) {
+            document.getElementById('areaLogin').style.display = 'none';
+            document.getElementById('areaPrivada').style.display = 'block';
+            document.getElementById('boasVindas').innerText = "Olá, " + nome + "!";
+            ouvirRecados(); // Começa a "escutar" a nuvem
+        }
+
+        // --- LÓGICA DO MURAL (FIREBASE) ---
+        function postarRecado() {
+            const input = document.getElementById('novoRecado');
+            if (input.value.trim() === "") return;
+
+            // Envia para o Firebase
+            database.ref('mural').push({
+                texto: input.value,
+                autor: localStorage.getItem('usuarioLogado'),
+                data: new Date().toLocaleString('pt-BR')
+            });
+
+            input.value = "";
+        }
+
+        function ouvirRecados() {
+            // Essa função roda toda vez que algo muda no banco
+            database.ref('mural').on('value', (snapshot) => {
+                const lista = document.getElementById('listaRecados');
+                lista.innerHTML = "";
+                const dados = snapshot.val();
+
+                if (dados) {
+                    // Transforma o objeto do Firebase em array e inverte
+                    Object.keys(dados).reverse().forEach(key => {
+                        const item = dados[key];
+                        lista.innerHTML += `
+                            <div class="recado-card">
+                                <span class="excluir-btn" onclick="excluirRecado('${key}')">X</span>
+                                <strong>${item.autor}:</strong> ${item.texto}
+                                <span class="hora">${item.data}</span>
+                            </div>
+                        `;
+                    });
+                }
+            });
+        }
+
+        function excluirRecado(id) {
+            database.ref('mural/' + id).remove();
+        }
+
+        function logout() {
+            localStorage.removeItem('usuarioLogado');
+            location.reload();
+        }
+
+        // Auto-login
+        if(localStorage.getItem('usuarioLogado')) {
+            mostrarAreaPrivada(localStorage.getItem('usuarioLogado'));
+        }
+    </script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mural Família Cloud</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+
+    <style>
+        body { background-color: #121212; color: white; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
+        .container { width: 100%; max-width: 450px; text-align: center; }
+        h1 { border: 2px solid #00ff00; padding: 15px; border-radius: 10px; color: #00ff00; }
+        .box { background: #1e1e1e; padding: 20px; border-radius: 15px; margin-top: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        input { padding: 12px; border-radius: 5px; border: 1px solid #333; margin-bottom: 10px; background: #121212; color: white; width: 85%; }
+        .btn { background-color: #00ff00; color: #121212; padding: 12px 20px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; width: 95%; }
+        .recado-card { background: #252525; padding: 15px; border-radius: 8px; margin-top: 15px; border-left: 5px solid #00ff00; text-align: left; position: relative; }
+        .excluir-btn { position: absolute; top: 10px; right: 10px; color: #ff4444; cursor: pointer; font-weight: bold; }
+        .hora { font-size: 0.7em; color: #888; display: block; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Mural da Família</h1>
+
+        <div id="areaLogin" class="box">
+            <input type="text" id="campoUsuario" placeholder="Usuário">
+            <input type="password" id="campoSenha" placeholder="Senha">
+            <button class="btn" onclick="fazerLogin()">ENTRAR</button>
+        </div>
+
+        <div id="areaPrivada" style="display: none;">
+            <div class="box">
+                <h3 id="boasVindas">Olá!</h3>
+                <input type="text" id="novoRecado" placeholder="Digite sua mensagem...">
+                <button class="btn" onclick="postarRecado()">POSTAR NA NUVEM</button>
+            </div>
+            <div id="listaRecados"></div>
+            <button class="btn" onclick="logout()" style="background:#333; color:white; margin-top:30px; width:50%">SAIR</button>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIGURAÇÃO FIREBASE ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyBnxNTCOWLPPsrIlu2_Kgd2l0qTZP-aUt8",
+            authDomain: "mural-familia-9223d.firebaseapp.com",
+            databaseURL: "https://mural-familia-9223d-default-rtdb.firebaseio.com/",
+            projectId: "mural-familia-9223d",
+            storageBucket: "mural-familia-9223d.firebasestorage.app",
+            messagingSenderId: "577356833001",
+            appId: "1:577356833001:web:0cdf6bca4c4289dadcd078"
+        };
+
+        // Inicializa o Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // --- LÓGICA DE LOGIN ---
+        function fazerLogin() {
+            const user = document.getElementById('campoUsuario').value;
+            const pass = document.getElementById('campoSenha').value;
+            if(user.toLowerCase() === "admin" && pass === "1234") {
+                localStorage.setItem('usuarioLogado', user);
+                mostrarAreaPrivada(user);
+            }
+        }
+
+        function mostrarAreaPrivada(nome) {
+            document.getElementById('areaLogin').style.display = 'none';
+            document.getElementById('areaPrivada').style.display = 'block';
+            document.getElementById('boasVindas').innerText = "Olá, " + nome + "!";
+            ouvirRecados(); // Começa a "escutar" a nuvem
+        }
+
+        // --- LÓGICA DO MURAL (FIREBASE) ---
+        function postarRecado() {
+            const input = document.getElementById('novoRecado');
+            if (input.value.trim() === "") return;
+
+            // Envia para o Firebase
+            database.ref('mural').push({
+                texto: input.value,
+                autor: localStorage.getItem('usuarioLogado'),
+                data: new Date().toLocaleString('pt-BR')
+            });
+
+            input.value = "";
+        }
+
+        function ouvirRecados() {
+            // Essa função roda toda vez que algo muda no banco
+            database.ref('mural').on('value', (snapshot) => {
+                const lista = document.getElementById('listaRecados');
+                lista.innerHTML = "";
+                const dados = snapshot.val();
+
+                if (dados) {
+                    // Transforma o objeto do Firebase em array e inverte
+                    Object.keys(dados).reverse().forEach(key => {
+                        const item = dados[key];
+                        lista.innerHTML += `
+                            <div class="recado-card">
+                                <span class="excluir-btn" onclick="excluirRecado('${key}')">X</span>
+                                <strong>${item.autor}:</strong> ${item.texto}
+                                <span class="hora">${item.data}</span>
+                            </div>
+                        `;
+                    });
+                }
+            });
+        }
+
+        function excluirRecado(id) {
+            database.ref('mural/' + id).remove();
+        }
+
+        function logout() {
+            localStorage.removeItem('usuarioLogado');
+            location.reload();
+        }
+
+        // Auto-login
+        if(localStorage.getItem('usuarioLogado')) {
+            mostrarAreaPrivada(localStorage.getItem('usuarioLogado'));
+        }
+    </script>
+</body>
+</html>
