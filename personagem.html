@@ -5,42 +5,66 @@
     <title>Mundo Medieval - Criar Personagem</title>
     <style>
         body { background: #0b0b0b; color: white; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .container { background: #151515; padding: 30px; border-radius: 20px; border: 1px solid #333; width: 100%; max-width: 400px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        h2 { color: #00ff00; text-transform: uppercase; letter-spacing: 2px; }
-        input, select { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #444; background: #222; color: white; box-sizing: border-box; }
+        .container { background: #151515; padding: 30px; border-radius: 20px; border: 1px solid #333; width: 100%; max-width: 400px; text-align: center; }
+        h2 { color: #00ff00; text-transform: uppercase; }
+        input, select { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #444; background: #222; color: white; }
         .stats-box { background: #1a1a1a; padding: 15px; border-radius: 10px; margin: 20px 0; text-align: left; }
         .stat-row { display: flex; justify-content: space-between; align-items: center; margin: 10px 0; }
-        .btn-crear { background: #00ff00; color: black; border: none; padding: 15px; width: 100%; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.3s; }
-        .btn-crear:hover { background: #00cc00; transform: scale(1.02); }
+        .btn-crear { background: #00ff00; color: black; border: none; padding: 15px; width: 100%; border-radius: 10px; font-weight: bold; cursor: pointer; }
         .pontos-restantes { color: #ffcc00; font-weight: bold; margin-bottom: 10px; display: block; }
+        button { background: #333; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
     </style>
 </head>
 <body>
-
     <div class="container">
         <h2>Novo Herói ⚔️</h2>
-        
         <input type="text" id="nome" placeholder="Nome do herói..." maxlength="15">
-        
         <select id="classe">
             <option value="Guerreiro">Guerreiro</option>
             <option value="Arqueiro">Arqueiro</option>
             <option value="Mago">Mago</option>
         </select>
-
         <div class="stats-box">
-            <span class="pontos-restantes">Pontos Disponíveis: <span id="pontos">5</span></span>
-            
-            <div class="stat-row">
-                <span>💪 Força</span>
-                <div>
-                    <button onclick="ajustar('forca', -1)">-</button>
-                    <span id="val-forca" style="margin: 0 10px;">0</span>
-                    <button onclick="ajustar('forca', 1)">+</button>
-                </div>
-            </div>
+            <span class="pontos-restantes">Pontos Disponíveis: <span id="pontos">10</span></span>
+            <div class="stat-row"><span>💪 Força</span><div><button onclick="ajustar('forca', -1)">-</button><span id="val-forca" style="margin: 0 10px;">0</span><button onclick="ajustar('forca', 1)">+</button></div></div>
+            <div class="stat-row"><span>❤️ Vitalidade</span><div><button onclick="ajustar('vitalidade', -1)">-</button><span id="val-vitalidade" style="margin: 0 10px;">0</span><button onclick="ajustar('vitalidade', 1)">+</button></div></div>
+            <div class="stat-row"><span>⚡ Agilidade</span><div><button onclick="ajustar('agilidade', -1)">-</button><span id="val-agilidade" style="margin: 0 10px;">0</span><button onclick="ajustar('agilidade', 1)">+</button></div></div>
+            <div class="stat-row"><span>🧠 Inteligência</span><div><button onclick="ajustar('inteligencia', -1)">-</button><span id="val-inteligencia" style="margin: 0 10px;">0</span><button onclick="ajustar('inteligencia', 1)">+</button></div></div>
+        </div>
+        <button class="btn-crear" onclick="criarPersonagem()">ENTRAR NO MUNDO</button>
+    </div>
 
-            <div class="stat-row">
-                <span>❤️ Vitalidade</span>
-                <div>
-                    <button onclick="ajustar('vitalidade', -1)">-</button>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = 'https://zkeshycglokyycuplczn.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_iDavmG9sQzqW6jPrOCjsmQ_5ISCiZUF';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let pontosDisponiveis = 10;
+        let atributos = { forca: 0, vitalidade: 0, agilidade: 0, inteligencia: 0 };
+
+        function ajustar(stat, valor) {
+            if (valor > 0 && pontosDisponiveis > 0) { atributos[stat]++; pontosDisponiveis--; }
+            else if (valor < 0 && atributos[stat] > 0) { atributos[stat]--; pontosDisponiveis++; }
+            document.getElementById('pontos').innerText = pontosDisponiveis;
+            document.getElementById(`val-${stat}`).innerText = atributos[stat];
+        }
+
+        async function criarPersonagem() {
+            const nome = document.getElementById('nome').value.trim();
+            const email = localStorage.getItem("usuario_logado_email");
+            if (!nome || pontosDisponiveis > 0) return alert("Preencha o nome e use todos os pontos!");
+
+            const { error } = await supabaseClient.from('personagens').insert([{
+                id_conta: email, nome_heroi: nome, classe: document.getElementById('classe').value,
+                forca: atributos.forca, vitalidade: atributos.vitalidade, 
+                agilidade: atributos.agilidade, inteligencia: atributos.inteligencia,
+                nivel: 1, xp: 0
+            }]);
+
+            if (error) alert("Erro: Nome já existe ou falha no banco.");
+            else window.location.href = "selecao.html";
+        }
+    </script>
+</body>
+</html>

@@ -1,15 +1,24 @@
-// REGRAS DE COMBATE
+// combate.js
 function calcularDano(heroi) {
-    // Dano = 1 + (Força * 2)
-    return Math.floor(1 + (heroi.forca * 2));
+    let danoBase = heroi.forca * 2;
+    
+    // Cada ponto de Agilidade dá 5% de chance de crítico
+    let chanceCritico = (heroi.agilidade || 0) * 5;
+    let dado = Math.random() * 100;
+
+    if (dado < chanceCritico) {
+        console.log("🔥 CRÍTICO!");
+        return danoBase * 2; 
+    }
+
+    return danoBase;
 }
 
 function verificarLevelUp(heroi) {
-    let xpNecessario = 20 * heroi.nivel;
+    let xpNecessario = heroi.nivel * 20;
     if (heroi.xp >= xpNecessario) {
-        heroi.nivel += 1;
+        heroi.nivel++;
         heroi.xp = 0;
-        heroi.pontos_livres += 2;
         return true;
     }
     return false;

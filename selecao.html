@@ -2,57 +2,21 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Mundo Medieval - Seleção de Personagem</title>
+    <title>Seleção - Mundo Medieval</title>
     <style>
-        body { background: #0b0b0b; color: white; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
-        h2 { color: #00ff00; text-shadow: 0 0 10px rgba(0,255,0,0.5); margin-bottom: 30px; }
-        
+        body { background: #0b0b0b; color: white; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
         .lista-personagens { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; width: 100%; max-width: 900px; }
-        
-        /* Card do Personagem */
-        .card-heroi { 
-            background: #151515; border: 2px solid #333; border-radius: 15px; 
-            padding: 20px; cursor: pointer; transition: 0.3s; position: relative; overflow: hidden; 
-        }
-        .card-heroi:hover { border-color: #00ff00; transform: translateY(-5px); background: #1a1a1a; }
-        .card-heroi h3 { margin: 0 0 10px 0; color: #fff; }
-        .card-heroi p { margin: 5px 0; font-size: 14px; color: #aaa; }
-        
-        /* Botão Deletar (O que você adicionou no CSS) */
-        .btn-deletar {
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            background: #ff4444;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            padding: 5px 10px;
-            cursor: pointer;
-            font-size: 11px;
-            font-weight: bold;
-            transition: 0.3s;
-            z-index: 10;
-        }
-        .btn-deletar:hover { background: #cc0000; transform: scale(1.1); }
-
-        .lvl-badge { position: absolute; top: 10px; right: 10px; background: #00ff00; color: black; padding: 2px 8px; border-radius: 5px; font-weight: bold; font-size: 12px; }
-
-        .btn-novo { margin-top: 40px; background: transparent; color: #00ff00; border: 2px solid #00ff00; padding: 12px 25px; border-radius: 10px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        .btn-novo:hover { background: #00ff00; color: black; }
-        #mensagem { margin-top: 20px; color: #666; }
+        .card-heroi { background: #151515; border: 2px solid #333; border-radius: 15px; padding: 20px; cursor: pointer; position: relative; }
+        .card-heroi:hover { border-color: #00ff00; }
+        .btn-deletar { position: absolute; bottom: 10px; right: 10px; background: #ff4444; border: none; color: white; padding: 5px; border-radius: 5px; cursor: pointer; }
+        .lvl-badge { position: absolute; top: 10px; right: 10px; background: #00ff00; color: black; padding: 2px 8px; border-radius: 5px; font-weight: bold; }
+        .btn-novo { margin-top: 40px; background: transparent; color: #00ff00; border: 2px solid #00ff00; padding: 10px 20px; cursor: pointer; border-radius: 10px; }
     </style>
 </head>
 <body>
-
     <h2>SEUS HERÓIS ⚔️</h2>
-
-    <div id="lista" class="lista-personagens">
-        </div>
-
-    <div id="mensagem">Buscando aventureiros...</div>
-
-    <button class="btn-novo" onclick="window.location.href='personagem.html'">+ CRIAR NOVO PERSONAGEM</button>
+    <div id="lista" class="lista-personagens"></div>
+    <button class="btn-novo" onclick="window.location.href='personagem.html'">+ NOVO PERSONAGEM</button>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
@@ -60,84 +24,36 @@
         const SUPABASE_KEY = 'sb_publishable_iDavmG9sQzqW6jPrOCjsmQ_5ISCiZUF';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        const email = localStorage.getItem("usuario_logado_email");
-
-        async function carregarPersonagens() {
-            if (!email) {
-                window.location.href = "index.html";
-                return;
-            }
-
-            try {
-                const { data, error } = await supabaseClient
-                    .from('personagens')
-                    .select('*')
-                    .eq('id_conta', email)
-                    .order('nivel', { ascending: false });
-
-                if (error) throw error;
-
-                const listaDiv = document.getElementById('lista');
-                const msg = document.getElementById('mensagem');
-                listaDiv.innerHTML = "";
-
-                if (data && data.length > 0) {
-                    msg.innerText = "Escolha um herói ou remova os antigos.";
-                    data.forEach(heroi => {
-                        const card = document.createElement('div');
-                        card.className = 'card-heroi';
-                        
-                        // Clique no card seleciona o herói
-                        card.onclick = () => selecionar(heroi);
-                        
-                        card.innerHTML = `
-                            <div class="lvl-badge">LVL ${heroi.nivel}</div>
-                            <h3>${heroi.nome_heroi}</h3>
-                            <p>🛡️ Classe: ${heroi.classe || 'Guerreiro'}</p>
-                            <p>💪 Força: ${heroi.forca} | ❤️ Vit: ${heroi.vitalidade}</p>
-                            <button class="btn-deletar" onclick="deletarHeroi(event, ${heroi.id}, '${heroi.nome_heroi}')">DELETAR</button>
-                        `;
-                        listaDiv.appendChild(card);
-                    });
-                } else {
-                    msg.innerText = "Você ainda não tem heróis criados.";
-                }
-            } catch (err) {
-                console.error(err);
-                document.getElementById('mensagem').innerText = "Erro ao carregar lista.";
-            }
-        }
-
-        function selecionar(heroi) {
-            localStorage.setItem("heroi_selecionado_id", heroi.id);
-            window.location.href = "jogo.html";
-        }
-
-        // FUNÇÃO DE DELETAR CORRIGIDA
-        async function deletarHeroi(event, id, nome) {
-            event.stopPropagation(); // Impede de abrir o jogo ao clicar no botão
-
-            const confirmacao = confirm(`Tem certeza que deseja apagar o herói "${nome}"?`);
+        async function carregar() {
+            const email = localStorage.getItem("usuario_logado_email");
+            const { data } = await supabaseClient.from('personagens').select('*').eq('id_conta', email).order('nivel', { ascending: false });
             
-            if (confirmacao) {
-                try {
-                    const { error } = await supabaseClient
-                        .from('personagens')
-                        .delete()
-                        .eq('id', id);
-
-                    if (error) throw error;
-
-                    alert("Herói removido com sucesso!");
-                    location.reload(); // Atualiza a lista
-                } catch (err) {
-                    console.error("Erro ao deletar:", err);
-                    alert("Não foi possível deletar o personagem.");
-                }
-            }
+            const listaDiv = document.getElementById('lista');
+            listaDiv.innerHTML = "";
+            data.forEach(heroi => {
+                const card = document.createElement('div');
+                card.className = 'card-heroi';
+                card.onclick = () => { localStorage.setItem("heroi_selecionado_id", heroi.id); window.location.href = "jogo.html"; };
+                card.innerHTML = `
+                    <div class="lvl-badge">LVL ${heroi.nivel}</div>
+                    <h3>${heroi.nome_heroi}</h3>
+                    <p>🛡️ ${heroi.classe}</p>
+                    <p>💪 FOR: ${heroi.forca} | ❤️ VIT: ${heroi.vitalidade}</p>
+                    <p>⚡ AGI: ${heroi.agilidade || 0} | 🧠 INT: ${heroi.inteligencia || 0}</p>
+                    <button class="btn-deletar" onclick="deletarHeroi(event, ${heroi.id})">DELETAR</button>
+                `;
+                listaDiv.appendChild(card);
+            });
         }
 
-        carregarPersonagens();
+        async function deletarHeroi(event, id) {
+            event.stopPropagation();
+            if (confirm("Deletar herói?")) {
+                await supabaseClient.from('personagens').delete().eq('id', id);
+                location.reload();
+            }
+        }
+        carregar();
     </script>
 </body>
 </html>
