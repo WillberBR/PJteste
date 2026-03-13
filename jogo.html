@@ -16,44 +16,41 @@
         .bar-container { width: 100%; height: 18px; background: #333; border-radius: 10px; position: relative; overflow: hidden; border: 1px solid #444; }
         .bar-fill { height: 100%; width: 0%; transition: width 0.3s ease-in-out; }
         
-        /* Cores das Barras */
         .hp-bar { background: linear-gradient(90deg, #ff4444, #880000); }
         .mp-bar { background: linear-gradient(90deg, #4444ff, #000088); }
         .xp-bar { background: linear-gradient(90deg, #ffcc00, #aa8800); }
         
         .bar-text { position: absolute; width: 100%; text-align: center; font-size: 11px; font-weight: bold; color: white; line-height: 18px; text-shadow: 1px 1px 2px black; }
 
-        /* Atributos Menores */
         .mini-stats { display: flex; justify-content: space-around; background: #0a0a0a; padding: 5px; font-size: 12px; color: #888; border-bottom: 1px solid #222; }
 
-        /* Animação de Sacudida (Shake) */
+        /* Animação de Impacto */
         @keyframes shake {
             0% { transform: translate(1px, 1px) rotate(0deg); }
-            10% { transform: translate(-1px, -2px) rotate(-1deg); }
             20% { transform: translate(-3px, 0px) rotate(1deg); }
-            30% { transform: translate(3px, 2px) rotate(0deg); }
             40% { transform: translate(1px, -1px) rotate(1deg); }
-            50% { transform: translate(-1px, 2px) rotate(-1deg); }
             60% { transform: translate(-3px, 1px) rotate(0deg); }
-            70% { transform: translate(3px, 1px) rotate(-1deg); }
             80% { transform: translate(-1px, -1px) rotate(1deg); }
-            90% { transform: translate(1px, 2px) rotate(0deg); }
             100% { transform: translate(1px, -2px) rotate(-1deg); }
         }
         .shake-anim { animation: shake 0.2s; }
 
-        /* Área do Monstro */
+        /* Monstros */
         .monster-area { margin-top: 40px; }
-        .monster-card { background: #1a1a1a; padding: 40px; border-radius: 25px; display: inline-block; cursor: pointer; border: 2px solid #333; transition: transform 0.1s; }
+        .monster-card { background: #1a1a1a; padding: 40px; border-radius: 25px; display: inline-block; cursor: pointer; border: 2px solid #333; }
         
         #game-log { margin: 20px auto; width: 90%; max-width: 600px; background: #050505; border: 1px solid #222; padding: 15px; font-size: 14px; height: 120px; overflow-y: auto; border-radius: 10px; text-align: left; }
+
+        /* Botões de Viagem */
+        .btn-cidade { position: fixed; bottom: 20px; right: 20px; background: #ffcc00; color: black; border: none; padding: 15px 20px; border-radius: 12px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(255, 204, 0, 0.3); transition: 0.3s; }
+        .btn-cidade:hover { background: #ffaa00; transform: translateY(-3px); }
+        .btn-voltar { position: fixed; bottom: 20px; left: 20px; background: #222; color: #fff; border: 1px solid #444; padding: 10px; border-radius: 8px; cursor: pointer; font-size: 12px; }
 
         /* Modal Level Up */
         #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 999; }
         #level-up-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #151515; border: 2px solid #00ff00; padding: 30px; border-radius: 20px; z-index: 1000; width: 280px; }
         .stat-upgrade { display: flex; justify-content: space-between; margin: 10px 0; }
         .btn-up { background: #00ff00; border: none; padding: 5px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .btn-voltar { position: fixed; bottom: 10px; left: 10px; background: #222; color: #fff; border: 1px solid #444; padding: 8px; border-radius: 5px; cursor: pointer; font-size: 12px; }
     </style>
 </head>
 <body>
@@ -85,7 +82,10 @@
         </div>
     </div>
 
-    <div id="game-log">>> Iniciando aventura...</div>
+    <div id="game-log">>> Iniciando caçada...</div>
+
+    <button class="btn-cidade" onclick="irParaCidade()">🏃 FUGIR PARA A CIDADE</button>
+    <button class="btn-voltar" onclick="window.location.href='selecao.html'">⬅ Sair do Jogo</button>
 
     <div id="modal-overlay"></div>
     <div id="level-up-modal">
@@ -95,10 +95,8 @@
         <div class="stat-upgrade"><span>Agilidade</span> <button class="btn-up" onclick="distribuir('agilidade')">+</button></div>
         <div class="stat-upgrade"><span>Vitalidade</span> <button class="btn-up" onclick="distribuir('vitalidade')">+</button></div>
         <div class="stat-upgrade"><span>Inteligência</span> <button class="btn-up" onclick="distribuir('inteligencia')">+</button></div>
-        <button onclick="fecharModal()" style="margin-top:20px; width:100%; padding:10px; cursor:pointer;">Fechar</button>
+        <button onclick="fecharModal()" style="margin-top:20px; width:100%; padding:10px; cursor:pointer;">Continuar</button>
     </div>
-
-    <button class="btn-voltar" onclick="window.location.href='selecao.html'">⬅ Sair</button>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="combate.js"></script>
@@ -136,18 +134,17 @@
             document.getElementById('display-int').innerText = heroi.inteligencia;
             document.getElementById('display-vit').innerText = heroi.vitalidade;
 
+            document.getElementById('xp-fill').style.width = `${(heroi.xp / xpProxNivel) * 100}%`;
             document.getElementById('hp-fill').style.width = "100%";
             document.getElementById('mp-fill').style.width = "100%";
-            document.getElementById('xp-fill').style.width = `${(heroi.xp / xpProxNivel) * 100}%`;
         }
 
         function atacar() {
             if (!heroi) return;
             
-            // Ativa a animação de sacudida
             const card = document.getElementById('card-monstro');
             card.classList.remove('shake-anim');
-            void card.offsetWidth; // Truque para resetar a animação
+            void card.offsetWidth; 
             card.classList.add('shake-anim');
 
             const dano = calcularDano(heroi);
@@ -174,9 +171,16 @@
             }).eq('id', heroi.id);
         }
 
+        function irParaCidade() {
+            if(confirm("Deseja voltar para a Vila do Amanhecer?")) {
+                window.location.href = "cidade.html";
+            }
+        }
+
         function abrirModal() {
             document.getElementById('modal-overlay').style.display = 'block';
             document.getElementById('level-up-modal').style.display = 'block';
+            document.getElementById('modal-pontos').innerText = heroi.pontos_livres;
         }
 
         function fecharModal() {
