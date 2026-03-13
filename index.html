@@ -3,180 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meu Portfólio Mobile</title>
+    <title>Mural da Família</title>
     <style>
-        body {
-            background-color: #121212;
-            color: white;
-            font-family: 'Segoe UI', Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-
-        .container {
-            text-align: center;
-            animation: fadeIn 1.5s ease-in;
-        }
-
-        h1 {
-            border: 2px solid #00ff00;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-
-        .login-box {
-            margin-top: 30px;
-            border-top: 1px solid #333;
-            padding-top: 20px;
-        }
-
-        input {
-            padding: 12px;
-            border-radius: 5px;
-            border: 1px solid #333;
-            margin-bottom: 10px;
-            background: #1e1e1e;
-            color: white;
-            width: 80%;
-        }
-
-        .btn {
-            background-color: #00ff00;
-            color: #121212;
-            padding: 12px 25px;
-            border: none;
-            border-radius: 5px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        .btn:hover { background-color: #00cc00; transform: scale(1.05); }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        body { background-color: #121212; color: white; font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
+        .container { text-align: center; width: 100%; max-width: 400px; }
+        h1 { border: 2px solid #00ff00; padding: 15px; border-radius: 10px; color: #00ff00; }
+        input { padding: 12px; border-radius: 5px; border: 1px solid #333; margin-bottom: 10px; background: #1e1e1e; color: white; width: 80%; }
+        .btn { background-color: #00ff00; color: #121212; padding: 12px 20px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; margin: 5px; }
+        .recado-card { background: #333; padding: 10px; border-radius: 5px; margin-bottom: 8px; border-left: 4px solid #00ff00; text-align: left; word-wrap: break-word; }
+        .login-box, #areaPrivada { background: #1e1e1e; padding: 20px; border-radius: 10px; margin-top: 20px; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>Sincronizado: PC + Android</h1>
-        
-        <div class="login-box" id="areaLogin">
-            <h3>Área do Usuário</h3>
-            <input type="text" id="campoUsuario" placeholder="Usuário">
-            <input type="password" id="campoSenha" placeholder="Senha">
-            <br>
+        <h1>Mural Digital</h1>
+
+        <div id="areaLogin" class="login-box">
+            <h3>Entrar</h3>
+            <input type="text" id="campoUsuario" placeholder="Usuário (admin)">
+            <input type="password" id="campoSenha" placeholder="Senha (1234)">
             <button class="btn" onclick="fazerLogin()">ENTRAR</button>
-            <p id="mensagemErro" style="color: #ff4444; margin-top: 10px;"></p>
+            <p id="mensagemErro" style="color: #ff4444;"></p>
         </div>
 
-       <div id="areaPrivada" style="display: none; width: 90%;">
-    <h2 style="color: #00ff00;">Área Secreta</h2>
-    
-    <div style="background: #1e1e1e; padding: 15px; border-radius: 10px; text-align: left;">
-        <h4>Mural da Família</h4>
-        <input type="text" id="novoRecado" placeholder="Escreva um recado..." style="width: 70%; margin-bottom: 5px;">
-        <button class="btn" onclick="postarRecado()" style="padding: 10px;">Postar</button>
-        
-        <div id="listaRecados" style="margin-top: 20px;">
+        <div id="areaPrivada" style="display: none;">
+            <h3 id="boasVindas">Bem-vindo!</h3>
+            <div style="margin-bottom: 20px;">
+                <input type="text" id="novoRecado" placeholder="Digite seu recado...">
+                <button class="btn" onclick="postarRecado()">POSTAR</button>
             </div>
-    </div>
+            
+            <div id="listaRecados">
+                </div>
 
-    <br>
-    <button class="btn" onclick="logout()" style="background: #444; color: white;">SAIR</button>
-</div>
+            <button class="btn" onclick="logout()" style="background: #444; color: white; margin-top: 30px;">SAIR</button>
+        </div>
     </div>
 
     <script>
-    // Esta parte roda assim que o site abre
-    window.onload = function() {
-        const usuarioSalvo = localStorage.getItem('usuarioLogado');
-        
-        // Se já existir um usuário salvo, pula direto para a área privada
-        if (usuarioSalvo) {
-            mostrarAreaPrivada(usuarioSalvo);
+        // Quando a página carrega, verifica login e mostra recados
+        window.addEventListener('load', () => {
+            const usuarioSalvo = localStorage.getItem('usuarioLogado');
+            if (usuarioSalvo) {
+                mostrarAreaPrivada(usuarioSalvo);
+            }
+        });
+
+        function fazerLogin() {
+            const user = document.getElementById('campoUsuario').value;
+            const pass = document.getElementById('campoSenha').value;
+            if (user === "admin" && pass === "1234") {
+                localStorage.setItem('usuarioLogado', user);
+                mostrarAreaPrivada(user);
+            } else {
+                document.getElementById('mensagemErro').innerText = "Dados incorretos!";
+            }
         }
-    };
 
-    function fazerLogin() {
-        const usuario = document.getElementById('campoUsuario').value;
-        const senha = document.getElementById('campoSenha').value;
-        const erro = document.getElementById('mensagemErro');
+        function mostrarAreaPrivada(nome) {
+            document.getElementById('areaLogin').style.display = 'none';
+            document.getElementById('areaPrivada').style.display = 'block';
+            document.getElementById('boasVindas').innerText = "Olá, " + nome + "!";
+            exibirRecados();
+        }
 
-        if (usuario === "admin" && senha === "1234") {
-            // SALVANDO NO NAVEGADOR:
-            localStorage.setItem('usuarioLogado', usuario);
+        function postarRecado() {
+            const input = document.getElementById('novoRecado');
+            const texto = input.value;
+            if (texto.trim() === "") return;
+
+            // Pega lista atual do LocalStorage ou cria uma nova
+            let recados = JSON.parse(localStorage.getItem('mural')) || [];
+            recados.push(texto);
             
-            mostrarAreaPrivada(usuario);
-        } else {
-            erro.innerText = "Usuário ou senha incorretos!";
+            // Salva de volta
+            localStorage.setItem('mural', JSON.stringify(recados));
+            
+            input.value = ""; // Limpa campo
+            exibirRecados();  // Atualiza lista na tela
         }
-    }
 
-    function mostrarAreaPrivada(nome) {
-        document.getElementById('areaLogin').style.display = 'none';
-        document.getElementById('areaPrivada').style.display = 'block';
-        // Personaliza a mensagem com o nome salvo
-        document.querySelector('#areaPrivada h2').innerText = "Bem-vindo, " + nome + "!";
-    }
-
-    function logout() {
-          // Função para carregar recados salvos ao abrir o site
-    window.onload = function() {
-        const usuarioSalvo = localStorage.getItem('usuarioLogado');
-        if (usuarioSalvo) {
-            mostrarAreaPrivada(usuarioSalvo);
-            exibirRecados(); // Mostra os recados salvos
+        function exibirRecados() {
+            const mural = document.getElementById('listaRecados');
+            const recados = JSON.parse(localStorage.getItem('mural')) || [];
+            
+            // Inverte a ordem para o mais novo aparecer em cima
+            mural.innerHTML = recados.reverse().map(msg => `
+                <div class="recado-card">${msg}</div>
+            `).join('');
         }
-    };
 
-    function postarRecado() {
-        const input = document.getElementById('novoRecado');
-        const texto = input.value;
-        
-        if (texto.trim() === "") return; // Não posta se estiver vazio
-
-        // Pegamos os recados que já existem ou criamos uma lista vazia
-        let recados = JSON.parse(localStorage.getItem('mural')) || [];
-        
-        // Adicionamos o novo recado
-        recados.push(texto);
-        
-        // Salvamos de volta no LocalStorage
-        localStorage.setItem('mural', JSON.stringify(recados));
-        
-        input.value = ""; // Limpa o campo
-        exibirRecados();  // Atualiza a tela
-    }
-
-    function exibirRecados() {
-        const mural = document.getElementById('listaRecados');
-        const recados = JSON.parse(localStorage.getItem('mural')) || [];
-        
-        // Criamos o HTML para cada recado
-        mural.innerHTML = recados.map(msg => `
-            <div style="background: #333; padding: 10px; border-radius: 5px; margin-bottom: 8px; border-left: 4px solid #00ff00;">
-                ${msg}
-            </div>
-        `).join('');
-    }
-
-        // Limpa o que foi salvo
-        localStorage.removeItem('usuarioLogado');
-        location.reload(); // Recarrega a página para voltar ao login
-    }
-</script>
-
-
+        function logout() {
+            localStorage.removeItem('usuarioLogado');
+            location.reload();
+        }
+    </script>
 </body>
 </html>
