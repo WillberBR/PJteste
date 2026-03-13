@@ -4,11 +4,19 @@ const SUPABASE_KEY = 'sb_publishable_iDavmG9sQzqW6jPrOCjsmQ_5ISCiZUF';
 
 let nomeUsuarioLogado = "";
 
-// --- 1. FUNÇÃO DE LOGIN (VERSÃO BLINDADA) ---
+// --- 1. FUNÇÃO DE LOGIN ---
 async function fazerLogin() {
-    const emailDigitado = document.getElementById('userName').value.trim().toLowerCase();
-    const senhaDigitada = document.getElementById('userPass').value.trim();
+    const emailInput = document.getElementById('userName');
+    const senhaInput = document.getElementById('userPass');
     const msgErro = document.getElementById('erro');
+
+    if (!emailInput || !senhaInput) {
+        console.error("Campos de login não encontrados no HTML!");
+        return;
+    }
+
+    const emailDigitado = emailInput.value.trim().toLowerCase();
+    const senhaDigitada = senhaInput.value.trim();
 
     try {
         const resposta = await fetch(`${SUPABASE_URL}/rest/v1/usuarios_familia?email=eq.${emailDigitado}&senha=eq.${senhaDigitada}`, {
@@ -23,14 +31,14 @@ async function fazerLogin() {
         if (dados && dados.length > 0) {
             const usuario = dados[0];
             
-            // Define o nome (tenta diferentes colunas para garantir)
+            // Define o nome de exibição
             nomeUsuarioLogado = usuario.nome_exibicao || usuario.nome || "Usuário";
 
             // Preenche dados do perfil
             if(document.getElementById('perfil-nome')) document.getElementById('perfil-nome').innerText = nomeUsuarioLogado;
             if(document.getElementById('perfil-bio')) document.getElementById('perfil-bio').innerText = usuario.bio || "Olá, família!";
             
-            // Lógica da Foto ou Inicial
+            // Lógica da Foto ou Inicial (Para tirar o erro visual)
             const fotoElemento = document.getElementById('perfil-foto');
             if (fotoElemento) {
                 const urlFoto = usuario.foto_url || usuario.foto;
@@ -59,7 +67,6 @@ async function fazerLogin() {
         }
     } catch (erro) {
         console.error("Erro no login:", erro);
-        alert("Erro técnico ao tentar logar.");
     }
 }
 
@@ -76,11 +83,6 @@ async function carregarMensagens() {
         const mensagens = await resposta.json();
         mural.innerHTML = ""; 
 
-        if (mensagens.length === 0) {
-            mural.innerHTML = "<p style='color: #888;'>Nenhum recado ainda.</p>";
-            return;
-        }
-
         mensagens.forEach(msg => {
             const botaoExcluir = msg.autor === nomeUsuarioLogado 
                 ? `<button onclick="excluirPost(${msg.id})" style="background:none; border:none; color:#ff4444; cursor:pointer; float:right; font-size:18px;">🗑️</button>` 
@@ -92,4 +94,74 @@ async function carregarMensagens() {
                     <strong style="color:#00ff00;">${msg.autor}:</strong>
                     <p style="margin:10px 0; color:#eee;">${msg.conteudo}</p>
                     <div style="display: flex; align-items: center; gap: 15px;">
-                        <button onclick="curtirPost(${msg.id}, ${msg.curtidas || 0})" style="background:#333; border:none; border-radius:20px; color:white; padding: 5
+                        <button onclick="curtirPost(${msg.id}, ${msg.curtidas || 0})" style="background:#333; border:none; border-radius:20px; color:white; padding: 5px 12px; cursor:pointer; display:flex; align-items:center; gap:5px;">
+                            ❤️ <span>${msg.curtidas || 0}</span>
+                        </button>
+                        <small style="color: #666;">${new Date(msg.created_at).toLocaleString('pt-BR')}</small>
+                    </div>
+                </div>
+            `;
+        });
+    } catch (e) {
+        console.error("Erro ao carregar mensagens:", e);
+    }
+}
+
+// --- 3. POSTAR NO MURAL ---
+async function postarMensagem() {
+    const campoTexto = document.getElementById('textoMensagem');
+    const texto = campoTexto.value.trim();
+    if (!texto) return;
+
+    try {
+        await fetch(`${SUPABASE_URL}/rest/v1/Mural_Familia`, {
+            method: 'POST',
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ autor: nomeUsuarioLogado, conteudo: texto })
+        });
+        campoTexto.value = ""; 
+        carregarMensagens();    
+    } catch (e) {
+        console.error("Erro ao postar:", e);
+    }
+}
+
+// --- 4. CURTIDAS COM TRAVA ---
+async function curtirPost(id, curtidasAtuais) {
+    if (localStorage.getItem(`curtido_${id}`)) {
+        alert("Você já curtiu este recado! ❤️");
+        return;
+    }
+
+    try {
+        await fetch(`${SUPABASE_URL}/rest/v1/Mural_Familia?id=eq.${id}`, {
+            method: 'PATCH',
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ curtidas: curtidasAtuais + 1 })
+        });
+
+        localStorage.setItem(`curtido_${id}`, "true");
+        carregarMensagens();
+    } catch (e) {
+        console.error("Erro ao curtir:", e);
+    }
+}
+
+// --- 5. EXCLUIR POST ---
+async function excluirPost(id) {
+    if (!confirm("Tem certeza que quer apagar este recado?")) return;
+    try {
+        await fetch(`${SUPABASE_URL}/rest/v1/Mural_Familia?id=eq.${id}`, {
+            method: 'DELETE',
+            headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+        });
+        carregarMensagens();
+    }
